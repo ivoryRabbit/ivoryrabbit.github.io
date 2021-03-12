@@ -1,0 +1,105 @@
+---
+layout: post
+title: Matthews Correlation Coefficient
+date: 2021-03-12
+author: ivoryRabbit
+description: 상관계수에 관한 수학(2)
+categories: 수학
+comments: true
+---
+
+## 상관계수
+
+상관계수(correlation coefficient)란 두 변수가 ordinal scale로 주어졌을 때 둘 사이에 얼마나 상관관계가 있는지 측정하는 척도이다. 보통 양의 상관관계를 가질 때 상관계수가 크고, 음의 상관관계를 가질 때 상관계수가 작도록 설계되어 있다. 여기서 상관관계가 반드시 "선형적이다"의 의미를 포함하진 않지만 가장 많이 사용되는 피어슨 상관계수가 이 선형성을 측정하고 있다.
+
+상관계수는 상관분석에서 결정계수를 계산할 때 사용된다. 추천시스템의 협력 필터링에서 두 아이템 혹은 두 고객이 얼마나 유사한지 계산하는 거리개념으로 활용되기도 한다.
+
+---
+
+## 매튜 상관계수(Matthews Correlation Coefficient, MCC)
+
+매튜 상관계수는 phi coefficient라고도 불리며, 옳고 그름을 판별하는 이진분류(binary classification)에 사용되는 metric이다. 여느 다른 상관계수처럼 -1과 1 사이의 값을 가지는데, 1에 가까울 수록 측정하고자 하는 두 관측치가 "비슷하다"고 본다.
+
+위키피디아를 보면 매튜 상관계수에 접근하는 다양한 계산 방식을 살펴볼 수 있다. 먼저 confusion matrix를 만들어 TP, TN, FP, FN을 계산하는데, 이 지표들은 Recall, Precision, F1-score 등과 관련이 깊다.
+
+$$ MCC = \frac{TP \times TN - FP \times FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}} $$
+
+TP, TN, FP, FN은 각각 다음을 의미한다.
+
+- TP(True Positive): 맞다고 예측(positive)했는데 그 예측이 맞는(true) 것의 개수
+- FP(False Positive): 맞다고 예측(positive)했는데 그 예측이 틀린(false) 것의 개수
+- FN(False Negative): 아니라고 예측(negative)했는데 그 예측이 틀린(false) 것의 개수
+- TN(True Negative): 아니라고 예측(negative)했는데 그 예측이 맞는(true) 것의 개수
+
+단순히 수식으로 볼 때 매튜 상관계수는 굉장히 난해하다. 외우기도 어렵고 이것이 무엇을 뜻하는지 알기 힘들다.
+
+그렇다면 또 다른 수식을 살펴 보자.
+
+$$MCC = \frac{TP/N - S \times P}{\sqrt{SP(1-S)(1-P)}}$$
+
+이때 N, S, P는 다음을 의미한다.
+
+- $N = TP + TN + FP + FN$: 전체 관측치의 개수
+- $S = \frac{TP + FN}{N}$: 전체 관측치 중 참인 관측치의 개수의 비율
+- $P = \frac{TP + FP}{N}$: 전체 관측치 중 참이라 예측한 관측치의 개수의 비율
+
+Recall과 Precision의 개념을 숙지하고 있다면 S와 P가 의미하는 바를 알기 쉬울 것이다. 하지만 여전히 MCC를 이해하기는 어렵다.
+
+수식을 몇번 끄적이며 곰곰이 생각한 끝에 매튜 상관계수를 이해할 수 있는 쉬운 방법을 알게 되었고, 이를 예시를 통해 설명해보려 한다.
+
+사진 속 동물이 고양이인지 아닌지 분류하는 문제에서 총 5장의 사진이 주어져있다고 하자. 이때 정답과 예측을 1과 0으로 이루어진 벡터로 표현할 수 있다. 관측치가 고양이 사진인 경우 1이라고 판단한다.
+
+- 실제 정답 벡터 $X = (1, 1, 1, 0, 0)$
+- 모델의 예측 벡터 $Y = (0, 1, 0, 1, 0)$
+
+이때 Confusion matrix는 다음과 같다.
+
+| 고양이 사진인가? | Predict = "Yes" | Predict = "No" |
+| --- |:---:|:---:|
+| Truth = "Yes" | TP = 1 | FN = 2 |
+| Truth = "No" | FP = 1 | TN = 1 |
+
+총 관측치의 개수는 $N=5$이고, 나머지 두 수는 $S = \frac{3}{5}$, $P = \frac{2}{5}$가 될 것이다. 따라서 매튜 상관계수는 다음 값을 갖게 된다.
+
+$$ MCC \approx -0.17 $$
+
+중요한 것은 매튜 상관계수가 사실 $X$, $Y$ 두 벡터의 피어슨 상관계수(pearson correlation coefficient)라는 것이다. $X$와 $Y$를 가지고 피어슨 상관계수 $\rho$를 구해보면 똑같은 값을 갖는다.
+
+$$ \rho(X, Y) \approx -0.17 $$
+
+증명은 다음과 같다.
+
+정답 벡터를 각각 $X = (X_1, X_2, \ldots, X_n)$, 예측 벡터를 $Y = (Y_1, Y_2, \ldots, Y_n)$라고 하자. 그러면 두 벡터의 피어슨 상관계수는 다음과 같다.
+
+$$ \rho = \frac{\sum\limits_n (X_n - \bar{X})(Y_n - \bar{Y})}{\sqrt{\sum\limits_n (X_n - \bar{X})^2 \sum\limits_n (Y_n - \bar{Y})^2}} $$
+
+이때 $\bar{X}$와 $\bar{Y}$는 각각 벡터 $X$와 $Y$의 평균값이다. 그런데 $X$는 정답 벡터라고 했기 때문에, $\sum_n X_n$은 정답에서 참인 관측치의 개수이다. 즉, $\bar{X}$는 위에서의 $S$와 같다. 마찬가지로 $\bar{Y}$는 위에서의 $P$와 같다.
+
+$$\bar{X} = \frac{1}{N}\sum\limits_n X_n = S$$
+$$\bar{Y} = \frac{1}{N}\sum\limits_n Y_n = P$$
+
+이쯤에서 우리는 이진 벡터(binary vector)를 다룰 때 사용하는 트릭을 살펴봐야 한다. 이 트릭은 상관계수 말고도 각종 거리(distance)를 계산하는데 유용하다.
+
+- $X^2_n = X_n$
+- $Y^2_n = Y_n$
+- $X \cdot Y = \sum\limits_n X_n Y_n = TP$. 즉, 참인데 참이라 예측한 관측치의 개수
+
+이제 피어슨 상관계수를 풀어보자. 
+
+$$
+\begin{aligned}
+\rho(X, Y) &= \frac{\sum_n (X_n - \bar{X})(Y_n - \bar{Y})}{\sqrt{\sum_n (X_n - \bar{X})^2 \sum_n (Y_n - \bar{Y})^2}}
+\\ &= \frac{\sum_n X_n Y_n - \bar{X} \sum_n Y_n - \bar{Y} - \sum_n X_n + N\bar{X}\bar{Y}}{\sqrt{\sum_n(X^2_n - 2X_n\bar{X} + \bar{X}^2) \sum_n(Y^2_n - 2Y_n\bar{Y} + \bar{Y}^2)}}
+\\ &= \frac{\sum_n X_n Y_n - N\bar{X}\bar{Y}}{\sqrt{(\sum_nX^2_n - N\bar{X}^2)( \sum_nY^2_n - N\bar{Y}^2)}}
+\\ &= \frac{X \cdot Y - N\bar{X}\bar{Y}}{\sqrt{(\sum_n X_n - N\bar{X}^2)( \sum_nY_n - N\bar{Y}^2)}}
+\\ &= \frac{X \cdot Y / N - \bar{X}\bar{Y}}{\sqrt{\bar{X}\bar{Y}(1- \bar{X})(1 - \bar{Y})}}
+\end{aligned}
+$$
+
+마지막으로 $TP = X \cdot Y$, $S = \bar{X}$, $P = \bar{Y}$를 각각 대입하면 다음을 얻을 수 있다.
+
+$$ \rho(X, Y) = \frac{TP / N - SP}{SP(1- S)(1 - P)} = MCC $$
+
+따라서 매튜 상관계수는 수식적으로 굉장히 복잡해 보이지만, 실은 정답 벡터와 예측 벡터가 얼마나 유사한지 나타내는 피어슨 상관계수일 뿐이다.
+
+다만 이렇게 피어슨 상관계수를 통해 계산하는 방법은 비효율적일 수도 있다. 추천시스템의 경우, user와 item에 대한 interaction matrix를 만들어 row-wise하게 계산해야 하는데, 이는 메모리 관리에 있어서 굉장히 부담스러울 것이다.
