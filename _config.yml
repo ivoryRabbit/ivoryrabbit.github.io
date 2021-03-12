@@ -74,9 +74,9 @@ social:
   - name: LinkedIn
     icon: linkedin
     username: ivoryRabbit
-    url: 
-    desc: Connect with me on LinkedIn
-    share: false
+    url: https://www.linkedin.com/in/%EB%8F%99%EA%B7%9C-%EC%9D%B4-7a57111a2/
+    desc: LinkedIn
+    share: true
 
   - name: YouTube
     icon: youtube
