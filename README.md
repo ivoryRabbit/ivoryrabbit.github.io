@@ -1,6 +1,6 @@
 # README
 
-## history
+## History
 
 - Mar 21, 2019 ~ repo 개설
 - Apr 12, 2019 ~ About Me 업데이트
@@ -11,6 +11,7 @@
 - Mar 21, 2020 ~ description 작성 가능하게 수정
 - Jan 01, 2021 ~ Mathjax 박살난 거 수정[[참고]](https://eeeuns.github.io/2020/12/10/githubblog/)
 - Feb 02, 2021 ~ Mathjax 박살나서 또 수정
+- Mar 14, 2021 ~ Font 업데이트
 
 ## License
 
