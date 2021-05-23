@@ -35,7 +35,7 @@ permalink: /about/
 - SQL
 - Latex
 
-## Framework
+## Frameworks
 - Tensorflow2
 - Spark/Pyspark
 - Numpy/Scikit-learn
