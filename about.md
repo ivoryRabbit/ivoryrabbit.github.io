@@ -1,6 +1,6 @@
 ---
 layout: page
-title: About
+title: About Me
 permalink: /about/
 ---
 
@@ -11,23 +11,31 @@ permalink: /about/
   - Jaurim
   - Linkin Park
   - Zitten
-- Cats
+- Cat
 
 ## Interested in
 - Descrete Geometry
 - Graph Theory
 - Data Science
-- Recommandation System
+- Recommander System
 
 ## Department of
 - Mathematical Sciences
 
 ## Research & Experience
-- Radon Numbers and the Fractional Helly Theorem(2019)
+- Radon Numbers and the Fractional Helly Theorem(2021)
 - Korean Combat Training Center(2019 ~ 2021)
+- Data Engineering
+- AWS
 
 ## Programming Languages
 - Python
+- Scala
 - R
-- Oracle
+- SQL
 - Latex
+
+## Framework
+- Tensorflow2
+- Spark/Pyspark
+- Numpy/Scikit-learn
