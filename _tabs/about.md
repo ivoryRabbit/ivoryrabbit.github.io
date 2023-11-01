@@ -4,5 +4,28 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-> Add Markdown syntax content to file `_tabs/about.md`{: .filepath } and it will show up on this page.
-{: .prompt-tip }
+### Currently working as
+- Data Engineer (2021 ~ Now)
+
+### Programming languages
+- Python
+- Scala
+- Kotlin
+- R
+
+### Interested in
+- Descrete Geometry
+- Graph Theory
+- Data Science
+- Recommander System
+
+### Department of
+- Mathematical Sciences
+
+### Research & Experience
+- Radon Numbers and the Fractional Helly Theorem (2020)
+- Korean Combat Training Center (2019 ~ 2021)
+
+### My favorites
+- Music
+- Cat
