@@ -16,7 +16,7 @@ timezone: Asia/Seoul
 
 title: IvoryRabbit # the main title
 
-tagline: A data engineer's blog # it will display as the sub-title
+tagline: 데이터가 어쩌고 저쩌고... # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
   A minimal, responsive and feature-rich Jekyll theme for technical writing.
