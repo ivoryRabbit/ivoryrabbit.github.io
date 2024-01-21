@@ -21,17 +21,19 @@ Trino Cluster는 하나의 Coordinator와 복수의 Workers로 구성되어 있�
 
 ## Trino Gateway란?
 
-Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용한, 일종의 프록시 서버이다. Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 folk되어 리팩토링되었으며 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
+Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용하며 Load Balancer, Proxy Server, Routing Gateway의 역할로서 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신, 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙을 구성하는 것이 가능하다. 
+
+Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어 리팩토링되었으며 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
 - [https://github.com/trinodb/trino-gateway](https://github.com/trinodb/trino-gateway){: target="_blank"}
 
 이름에서 유추할 수 있듯이 다음과 같은 목적으로 사용된다.
 
-### 1. Routing Gateway
+### 1. Routing
 
 분석 환경을 굳이 구분하자면, 적시적인 데이터 분석을 위해 상시로 쿼리가 실행되는 "Adhoc" 환경과 데이터 마트 또는 머신러닝을 위해 배포된 파이프라인이 실행되는 "Production" 환경 두 가지가 있을 수 있다.
 
-두 개발 환경 모두가 같은 Trino Cluster를 사용하게 된다면, 특정 시간에 스케쥴링된 Production 환경의 작업들이 Adhoc하게 실행된 쿼리에 의해 방해 받을 수 있다.
+두 개발 환경 모두가 같은 Trino Cluster를 사용하게 된다면, 특정 시간에 스케쥴링된 Production 환경의 작업들이 Adhoc하게 실행되는 쿼리들로 인해 방해 받을 수 있다.
 
 이를 방지하기 위해서는 두 개 이상의 클러스터를 운영하여 각 환경이 목적에 맞는 Trino 서버에 접근할 수 있도록 분리하는 것이 좋다. 이때 Trino Gateway를 사용하면 사용자들에게는 하나의 URL만 제공하되 환경 별로, 혹은 사용자 별로 연결을 통제할 수 있기 때문에 관리에 용이하다.
 
@@ -39,9 +41,9 @@ Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용한, 일종의 �
 
 Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 위해 서버가 상시적으로 띄워져 있을 가능성이 높다. 
 
-이 때 클러스터를 업그레이드 하거나 새로운 노드로 교체하고자 한다면 Trino Gateway를 이용해 Blue / Green 배포가 가능하다. 새로운 클러스터 서버를 띄운 후, API를 통해 Trino Gateway에서 교체하고자 하는 서버와 같은 라우팅 그룹에 등록해주면 된다.
+이 때 만약 클러스터를 업그레이드 하거나 새로운 노드로 교체하고자 한다면 Trino Gateway를 이용해 Blue / Green 배포가 가능하다. 새로운 클러스터 서버를 띄운 후, API를 통해 Trino Gateway에서 교체하고자 하는 서버와 같은 Routing Group에 등록해주면 된다.
 
-클러스터가 Trino Gateway에 한번 등록된 이후에도 API를 통해 해당 클러스터의 라우팅 그룹을 변경하거나 비활성화를 위해 Graceful Shutdown 시키는 것도 가능하다.
+클러스터가 Trino Gateway에 한번 등록된 이후에도 API를 통해 해당 클러스터의 Routing Group을 변경하거나 비활성화를 위해 Graceful Shutdown 시키는 것도 가능하다.
 
 ## Let's Practice
 
@@ -107,7 +109,7 @@ hive-metastore:
       - minio
 ```
 
-마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 property들에 대해서는 공식 문서를 읽어보는 것이 좋다.
+마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 설정에 대해서는 공식 문서를 읽어보는 것이 좋다.
 
 ```yaml
 trino-1:
