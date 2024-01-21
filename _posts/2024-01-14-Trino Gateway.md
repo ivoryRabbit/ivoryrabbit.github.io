@@ -1,5 +1,5 @@
 ---
-title:        Trino Gateway를 알아보자
+title:        Trino Gateway를 한번만 알아보자
 date:         2024-01-20
 categories:   [Data, Engineering]
 comments:     true
@@ -25,9 +25,9 @@ Trino의 아키텍처와 동작 방식과 관련해서는 2023 Naver Deview에�
 
 ## Trino Gateway란?
 
-Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용하며 Load Balancer, Proxy Server, Routing Gateway의 역할로서 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신, 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙을 구성하는 것이 가능하다. 
+Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용하며 Load Balancer, Proxy Server, Routing Gateway의 역할로서 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙들을 손쉽게 구성할 수 있다.
 
-Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어 리팩토링되었으며 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
+Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어 리팩토링되었으며, 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
 - [trino-gateway](https://github.com/trinodb/trino-gateway){: target="_blank"}
 
@@ -55,7 +55,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 > - [https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino](https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino){: target="_blank"}
 {: .prompt-tip }
 
-Docker를 이용하면 로컬 개발 환경에서 Trino Gateway를 손쉽게 사용해볼 수 있다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
+Trino Gateway를 사용해야 할 만큼 여러 클러스터를 운영해야 할 기회는 극히 드물다. 따라서 Docker를 이용하여 로컬 개발 환경에서 실습만 해보려고 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
 
 전체적인 시스템 디자인을 그려보면 다음과 같다.
 
@@ -113,7 +113,7 @@ hive-metastore:
       - minio
 ```
 
-마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 설정에 대해서는 공식 문서를 읽어보는 것이 좋다.
+마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 설정에 대해서는 반드시 알아야 할 것들이 많으므로 공식 문서를 읽어보는 것이 좋다.
 
 ```yaml
 trino-1:
