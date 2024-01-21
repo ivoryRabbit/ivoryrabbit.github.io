@@ -19,13 +19,17 @@ Trino Cluster는 하나의 Coordinator와 복수의 Workers로 구성되어 있�
 
 일단 작업이 시작되면 하나의 쿼리는 여러 "stage"로 나뉘어 순차적으로 실행되며, Coordinator는 Worker들과의 API 통신을 통해 작업 경과를 보고 받는다. 그리고 Spark와 마찬가지로 "Shuffle"을 위해 Worker 끼리 통신을 하기도 한다.
 
+Trino의 아키텍처와 동작 방식과 관련해서는 2023 Naver Deview에서 발표된 적이 있다.
+- [발표 영상](https://tv.naver.com/v/33862499){: target="_blank"}
+- [발표 자료](https://deview.kr/data/deview/session/attach/%5B133%5DCQuery%20-%20%EC%9A%B0%EB%8B%B9%ED%83%95%ED%83%95%20Trino%EC%99%80%20%EC%8D%B8%ED%83%80%EA%B8%B0.pdf){: target="_blank"}
+
 ## Trino Gateway란?
 
 Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용하며 Load Balancer, Proxy Server, Routing Gateway의 역할로서 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신, 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙을 구성하는 것이 가능하다. 
 
 Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어 리팩토링되었으며 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
-- [https://github.com/trinodb/trino-gateway](https://github.com/trinodb/trino-gateway){: target="_blank"}
+- [trino-gateway](https://github.com/trinodb/trino-gateway){: target="_blank"}
 
 이름에서 유추할 수 있듯이 다음과 같은 목적으로 사용된다.
 
@@ -53,7 +57,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 
 Docker를 이용하면 로컬 개발 환경에서 Trino Gateway를 손쉽게 사용해볼 수 있다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
 
-전체적인 아키택처를 그려보면 다음과 같다.
+전체적인 시스템 디자인을 그려보면 다음과 같다.
 
 ![image_01](/assets/img/posts/2024-01-21/image_01.png){: width="800" height="400" }
 
