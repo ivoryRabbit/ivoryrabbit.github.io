@@ -55,7 +55,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 > - [https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino](https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino){: target="_blank"}
 {: .prompt-tip }
 
-Trino Gateway를 사용해야 할 만큼 여러 클러스터를 운영해야 할 기회는 극히 드물다. 따라서 Docker를 이용하여 로컬 개발 환경에서 실습만 해보려고 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
+현업에서 Trino Gateway를 도입해야할 만큼 여러 클러스터를 운영해 볼 기회는 극히 드물다. 따라서 Docker를 이용해 서버를 띄워보고 이런게 있구나 정도로만 실습해보려 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
 
 전체적인 시스템 디자인을 그려보면 다음과 같다.
 
@@ -193,7 +193,7 @@ trino-gateway:
 
 ### 3. Rest API
 
-Trino Cluster와 Trino Gateway 서버가 무사히 띄워졌다면 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또한 Query parameter를 변경하여 등록과 삭제가 가능하고, 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
+Trino Cluster와 Trino Gateway 서버가 무사히 띄워졌다면 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또한 query parameter를 조작하여 등록과 삭제가 가능하고 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
 
 #### [register-trino-1.json]
 
