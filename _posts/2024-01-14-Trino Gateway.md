@@ -21,11 +21,11 @@ Trino Cluster는 하나의 Coordinator와 다수의 Workers로 구성되어 있�
 
 ## Trino Gateway란?
 
-Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용한, 일종의 프록시 서버이다. Trino와 마찬가지로 Presto Gateway로부터 folk되어 개발되었으며, 자세한 내용은 Github에서 확인 가능하다.
+Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용한, 일종의 프록시 서버이다. Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 folk되어 리팩토링되었으며, 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
 - https://github.com/trinodb/trino-gateway
 
-이름에서 유추할 수 있듯이 현업에서 다음과 같은 목적으로 사용될 수 있다.
+이름에서 유추할 수 있듯이 다음과 같은 목적으로 사용될 수 있다.
 
 ### 1. Routing Gateway
 
@@ -47,16 +47,15 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 
 Docker를 이용하여 로컬 개발 환경에서 Trino Gateway를 사용해볼 수 있다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고, Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore가 필요하다.
 
-### 1. Trino
-
-전체 아키택처를 간략하게 그리면 다음과 같다.
+전체적인 아키택처는 다음과 같다.
 
 ![image_01](/assets/img/posts/2024-01-21/image_01.png){: width="800" height="400" }
 
-S3 대신 MinIO 사용
+### 1. Trino
+
+먼저 데이터가 저장될 Object Storage를 구성해야 한다. 일반적으로 사용되는 AWS S3 대신 S3 SDK와 잘 호환되는 MinIO를 사용해보았다.
 
 ```yaml
-...
   minio:
     container_name: minio
     hostname: minio
@@ -72,7 +71,7 @@ S3 대신 MinIO 사용
     restart: always
 ```
 
-Postgres
+다음은 관계형 데이터베이스인 Postgres를 구성한다. 이 데이터베이스는 Hive Metadata 및 Trino Gateway의 백엔드 역할을 하게된다.
 
 ```yaml
 postgres:
@@ -87,19 +86,11 @@ postgres:
     volumes:
       - ./docker/volume/postgres:/var/lib/postgresql/data
       - ./docker/postgres/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
-      interval: 10s
-      retries: 3
-      start_period: 5s
 ```
 
-
-Hive Metastore
+다음은 Trino가 MinIO에 저장된 데이터를 조회할 수 있도록 테이블 및 파티션 정보를 저장할 Hive Metastore를 띄워 본다. `.env` 파일에 S3 엔드포인트와 Postgres 서버 정보를 환경 변수에 등록하여 Hive Metastore가 접근할 수 있도록 설정해준다.
 
 ```yaml
-...
-
 hive-metastore:
     container_name: hive-metastore
     hostname: hive-metastore
@@ -110,14 +101,11 @@ hive-metastore:
       - ./docker/hive-metastore/.env
     depends_on:
       postgres:
-        condition: service_healthy
 ```
 
-1개의 Coordinator와 2개의 Worker로 Trino Cluster를 구성
+마지막으로 Trino Cluster를 세팅한다. 1개의 Coordinator와 2개의 Worker로 Trino Cluster를 구성한다. 같은 도커 이미지를 사용하되 config.properties 파일을 마운트하여 Coordinator와 Worker를 결정할 수 있다.
 
 ```yaml
-...
-
 trino-1:
     container_name: trino-1
     hostname: trino
@@ -155,9 +143,13 @@ trino-1:
       - trino-1
 ```
 
+좀 더 상세한 내용은 Github에 업로드해 두었다.
+
+- https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino
+
 ### 2. Trino Gateway
 
-Trino Gateway 서버
+Trino Gateway 서버는 JVM 기반으로 작동한다. Maven에 등록된 JAR 파일을 다운로드 받은 후 서버를 실행 시킨 뒤, 3개의 port를 열어준다. gageway-config.yaml 파일에는 백엔드로 사용할 Postgres 서버 정보가 포함되어 있다.
 
 ```Dockerfile
 FROM openjdk:17-jdk-slim
@@ -171,7 +163,28 @@ ENV VERSION=4
 RUN curl https://repo1.maven.org/maven2/io/trino/gateway/gateway-ha/${VERSION}/gateway-ha-${VERSION}-jar-with-dependencies.jar -o gateway-ha.jar
 ```
 
-백엔드에 클러스터 등록
+```yaml
+  trino-gateway:
+    container_name: trino-gateway
+    hostname: trino-gateway
+    build:
+      dockerfile: ./docker/trino-gateway/Dockerfile
+    image: trino-gateway
+    ports:
+      - "9080:9080"
+      - "9081:9081"
+      - "9082:9082"
+    volumes:
+      - ./docker/trino-gateway/gateway-config.yaml:/etc/trino-gateway/gateway-config.yaml
+    depends_on:
+      postgres:
+    entrypoint: >
+      java -Xmx1g --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED -jar gateway-ha.jar server gateway-config.yaml
+```
+
+### 3. Rest API
+
+Trino Cluster와 Trino Gateway 서버가 띄워졌다면 Rest API로 클러스터를 서버에 등록할 수 있다.
 
 ```json
 {
@@ -186,5 +199,7 @@ RUN curl https://repo1.maven.org/maven2/io/trino/gateway/gateway-ha/${VERSION}/g
 ```bash
 curl -H "Content-Type: application/json" -X POST localhost:9080/gateway/backend/modify/update -d @scripts/register-trino-1.json
 ```
+
+9080 port로 접속하면 등록된 클러스터를 웹서버를 통해 확인할 수 있다.
 
 ![image_02](/assets/img/posts/2024-01-21/image_02.png){: width="800" height="400" }
