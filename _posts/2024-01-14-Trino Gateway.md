@@ -23,7 +23,7 @@ Trino Cluster는 하나의 Coordinator와 복수의 Workers로 구성되어 있�
 
 Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용한, 일종의 프록시 서버이다. Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 folk되어 리팩토링되었으며 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
-- https://github.com/trinodb/trino-gateway
+- [https://github.com/trinodb/trino-gateway](https://github.com/trinodb/trino-gateway){: target="_blank"}
 
 이름에서 유추할 수 있듯이 다음과 같은 목적으로 사용된다.
 
@@ -46,7 +46,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 ## Let's Practice
 
 > 다음 Github 링크에 상세한 설정을 정리해 두었습니다.
-> - https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino
+> - [https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino](https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino){: target="_blank"}
 {: .prompt-tip }
 
 Docker를 이용하면 로컬 개발 환경에서 Trino Gateway를 손쉽게 사용해볼 수 있다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고 Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
