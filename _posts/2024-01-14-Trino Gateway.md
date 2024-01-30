@@ -55,7 +55,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 > - [https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino](https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino){: target="_blank"}
 {: .prompt-tip }
 
-현업에서 Trino Gateway를 도입해야할 만큼 여러 클러스터를 운영해 볼 기회는 극히 드물다. 따라서 Docker를 이용해 서버를 띄워보고, "아 이런게 있구나!" 정도로만 실습해보려 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고, Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 구축해야 한다.
+현업에서 Trino Gateway를 도입해야할 만큼 여러 클러스터를 운영해 볼 기회는 극히 드물다. 따라서 Docker를 이용해 서버를 띄워보고, "아 이런게 있구나!" 정도로만 실습해보려 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고, Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 세팅해야 한다.
 
 전체적인 시스템 디자인을 그려보면 다음과 같다.
 
@@ -80,7 +80,7 @@ minio:
     command: server /data --console-address ":9001"
 ```
 
-다음은 관계형 데이터베이스인 Postgres이다. 이 데이터베이스는 Hive Metadata 및 Trino Gateway의 백엔드 역할을 하게된다.
+다음은 관계형 데이터베이스인 Postgres이다. 편의를 위해서 Hive Metastore 및 Trino Gateway의 백엔드 역할을 동시에 수행하도록 한다.
 
 ```yaml
 postgres:
@@ -97,7 +97,7 @@ postgres:
       - ./docker/postgres/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
 ```
 
-다음으로는 Trino가 테이블 및 파티션 정보를 저장하고 조회할 Hive Metastore를 구성한다. `.env` 파일에 S3 엔드포인트와 Postgres 서버 정보를 환경 변수에 등록하여 Hive Metastore가 접근할 수 있도록 설정해준다.
+다음으로는 Trino가 테이블 및 파티션 정보를 저장하고 조회할 Hive Metastore를 구성한다. Starburst의 도커 이미지를 사용하면 `.env` 파일에 S3 엔드포인트와 Postgres 서버 정보를 환경 변수에 등록하여 Hive Metastore에 접근 가능하도록 설정할 수 있다.
 
 ```yaml
 hive-metastore:
@@ -113,7 +113,7 @@ hive-metastore:
       - minio
 ```
 
-마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 설정에 대해서는 반드시 알아야 할 것들이 많으므로 공식 문서를 읽어보는 것이 좋다.
+마지막으로 1개의 Coordinator와 2개의 Worker로 구성된 Trino Cluster를 세팅한다. Coordinator와 Worker는 동일한 도커 이미지를 사용하되 config.properties 파일을 서로 다르게 구성하여 volume에 마운트하면 된다. 이 때 config.properties 파일 속 설정에 대해서는 반드시 알아야 할 것들이 많으므로 [공식 문서](https://trino.io/docs/current/admin/properties.html){: target="_blank"}를 읽어보는 것이 좋다.
 
 ```yaml
 trino-1:
@@ -155,7 +155,7 @@ trino-1-worker-2:
 
 ### 2. Trino Gateway
 
-Trino Gateway 서버는 JVM 기반으로 작동한다. Maven에 등록된 JAR 파일을 다운로드 받은 후 서버를 실행 시킨 뒤, 3개의 port를 열어주어야 한다. 이 때 gateway-config.yaml 파일에는 백엔드로 사용할 Postgres 서버 정보를 입력해 주어야 한다.
+Trino Gateway 서버는 JVM 기반으로 작동한다. Maven에 등록된 JAR 파일을 다운로드 받은 후 서버를 실행 시킨 뒤, 3개의 port를 열어주어야 한다. 이 때 gateway-config.yaml 파일에는 백엔드로 사용할 Postgres 서버 정보를 입력해 주면 된다.
 
 #### [Dockerfile]
 
@@ -200,9 +200,15 @@ trino-gateway:
     ]
 ```
 
+Docker compose 실행에 필요한 yaml 파일이 준비되었다면 다음 명령어를 통해 컨테이너들을 생성할 수 있다.
+
+```shell
+dodcker compose up #  또는 docker-compose up
+```
+
 ### 3. Rest API
 
-Trino Cluster와 Trino Gateway 서버가 무사히 띄워졌다면 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또한 query parameter를 조작하여 등록과 삭제가 가능하고 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
+Trino Cluster와 Trino Gateway 서버가 무사히 띄워졌다면 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또 query parameter를 조작하여 등록과 삭제가 가능하며 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
 
 #### [register-trino-1.json]
 
@@ -226,7 +232,7 @@ curl -H "Content-Type: application/json" \
 
 ![image_02](/assets/img/posts/2024-01-21/image_02.png){: width="800" height="400" }
 
-앞서 설명한대로, Routing Rule을 설정하면 사용자 별로 서로 다른 클러스터로 라우팅하는 것이 가능하다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리를 실행시키도록 할 수 있다.
+앞서 설명한대로, Routing Rule을 설정하면 사용자 별로 서로 다른 클러스터로 라우팅하는 것이 가능하다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리가 실행되도록 할 수 있다. 또한 서버를 내리지 않아도 yaml 파일만 수정하면 언제든지 라우팅 룰을 추가 및 변경할 수 있다.
 
 #### [routing-rule.yaml]
 
