@@ -8,7 +8,7 @@ comments:     true
 <style>
 H2 { color: #298294 }
 H3 { color: #1e7ed2 }
-H4 { color: #deb887 }
+H4 { color: #C7A579 }
 </style>
 
 ## Trino란?
@@ -232,7 +232,7 @@ curl -H "Content-Type: application/json" \
 
 ![image_02](/assets/img/posts/2024-01-21/image_02.png){: width="800" height="400" }
 
-앞서 설명한대로, Routing Rule을 설정하면 사용자 별로 서로 다른 클러스터로 라우팅하는 것이 가능하다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리가 실행되도록 할 수 있다. 또한 서버를 내리지 않아도 yaml 파일만 수정하면 언제든지 라우팅 룰을 추가 및 변경할 수 있다.
+앞서 설명한대로, Routing Rule을 설정하면 사용자 별로 서로 다른 클러스터로 라우팅하는 것이 가능하다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리가 실행되도록 할 수 있다. 또한 yaml 파일만 수정하면 서버를 내리지 않고도 언제든지 라우팅 룰을 추가 및 변경할 수 있다.
 
 #### [routing-rule.yaml]
 
