@@ -63,7 +63,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 
 ### 1. Trino
 
-먼저 데이터가 저장될 Object Storage를 구성해야 한다. 주로 사용되는 AWS S3를 대체하기 위해 오픈소스인 MinIO를 선택하였다.
+먼저 데이터가 저장될 Object Storage를 구성해야 한다. 흔히 사용되는 AWS S3 대신에 오픈소스인 MinIO를 선택하였다.
 
 ```yaml
 minio:
