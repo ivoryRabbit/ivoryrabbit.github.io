@@ -25,7 +25,7 @@ Trino의 아키텍처와 동작 방식과 관련해서는 2023 Naver Deview에�
 
 ## Trino Gateway란?
 
-Trino Gateway는 다수의 Trino Cluster를 운영할 때 유용하며 Load Balancer, Proxy Server, Routing Gateway의 역할로서 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙들을 손쉽게 구성할 수 있다.
+Trino Gateway는 다수의 Trino Cluster를 운영하고 있을 때 Load Balancer 및 Routing Gateway의 역할을 목적으로 사용된다. 기존에 수 많은 클러스터의 URL과 Credential을 각각 관리하는 대신 사용자에게 하나의 URL만 제공하고 Rest API를 이용해 필요한 규칙들을 손쉽게 구성할 수 있다.
 
 Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어 리팩토링되었으며, 오픈소스이기 때문에 Github에서 찾아볼 수 있다.
 
@@ -63,7 +63,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 
 ### 1. Trino
 
-먼저 데이터가 저장될 Object Storage를 구성해야 한다. 일반적으로 사용되는 AWS S3 대신 S3 SDK와 호환이 잘 되는 MinIO를 사용해 보았다.
+먼저 데이터가 저장될 Object Storage를 구성해야 한다. 주로 사용되는 AWS S3를 대체하기 위해 오픈소스인 MinIO를 선택하였다.
 
 ```yaml
 minio:
@@ -228,7 +228,7 @@ curl -H "Content-Type: application/json" \
     -d @scripts/register-trino-1.json
 ```
 
-웹 서버에서 9080 port로 접속하면 등록된 클러스터를 확인할 수 있다.
+웹 서버(http://localhost:9080/viewgateway)로 접속하면 등록된 클러스터를 확인할 수 있다.
 
 ![image_02](/assets/img/posts/2024-01-21/image_02.png){: width="800" height="400" }
 
@@ -243,5 +243,7 @@ condition: 'request.getHeader("X-Trino-User") == "airflow"'
 actions:
     - 'result.put("routingGroup", "etl")'
 ```
+
+Trino UI(http://localhost:8080/ui)에서 쿼리 내역을 살펴보면 `admin` 유저는 `trino-1` 클러스터로, `airflow` 유저는 `trino-2` 클러스터로 라우팅되었음을 확인할 수 있다.
 
 ![image_03](/assets/img/posts/2024-01-21/image_03.png){: width="800" height="400" }
