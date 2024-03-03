@@ -1,5 +1,5 @@
 ---
-title:        Flink
+title:        Dive into Flink (1)
 date:         2024-03-03
 categories:   [Data, Engineering]
 comments:     true
@@ -11,9 +11,13 @@ H3 { color: #1e7ed2 }
 H4 { color: #C7A579 }
 </style>
 
-## Flink
+최근 팀에서 특정 상품을 추천에 노출시키기 위해 파이프라인을 구축할 일이 있었다. Kafka에서 이벤트를 받아와 API를 호출한 후 Hive에 적재해야 했는데, streaming 처리가 적절하다고 판단했음에도 불구하고 batch 처리로 구현하였다.
 
-최근 회사에서 Apache Flink를 도입하자는 말이 있어 이번 기회를 빌어 한번 공부해보려고 한다.
+팀 내 데이터 엔지니어가 나뿐이라 클러스터 환경의 High Availability(HA) 유지가 부담되기도 하고, 이전에 Spark Structured Streaming을 위해 long-running EMR을 관리하면서 좋지 않은 기억이 많았다. ~~주말에 클러스터가 죽는 경험은 진짜 최악이었다.~~
+
+그런데 마침 조직에서 Apache Flink를 도입해보자는 말이 있어 이번 기회를 빌어 깊게 공부해 두려고 한다.
+
+## Flink
 
 Apache Flink는 배치 및 스트림을 지원하는 stateful 처리를 위한 분산 처리 프레임워크이다. 클러스터 환경에서 실행 가능하도록 High Availability(HA) 및 Scalability에 중점을 두어 설계되었으며, 인메모리 계산을 수행하여 지연 시간(latency)이 낮고 성능이 뛰어난 편이다.
 
@@ -29,7 +33,7 @@ Apache Flink는 배치 및 스트림을 지원하는 stateful 처리를 위한 �
 
 #### 2. Stream & Batch Analysis
 
-Flink는 데이터로부터 인사이트를 추출하고 분석하기 위한 방법으로 배치 쿼리 뿐만 아니라 실시간 쿼리 또한 지원하고 있다. 데이터가 지속적으로 추가되거나 업데이트되는 중에도 사용자는 Table 또는 SQL API를 통해 데이터를 조회할 수 있다.
+Flink는 데이터로부터 인사이트를 추출하고 분석하기 위한 방법으로 배치 쿼리 뿐만 아니라 실시간 쿼리 또한 지원하고 있다. 데이터가 지속적으로 추가되거나 업데이트되는 중에도 사용자는 Table API 또는 SQL를 통해 데이터를 조회할 수 있다.
 
 #### 3. Data Pipelines & ETL
 
@@ -39,7 +43,7 @@ Flink는 데이터로부터 인사이트를 추출하고 분석하기 위한 방
 
 ## Architecture
 
-Flink에서 스트리밍 어플리케이션을 실행시키기 위해서는 리소스 매니저가 필요하다. 리소스 매니저로는 Apache Spark와 흡사하게 Hadoop YARN 또는 Kubernetes를 사용할 수 있으며, Stand Alone로도 실행 가능하다.
+Flink에서 스트리밍 애플리케이션을 실행시키기 위해서는 리소스 매니저가 필요하다. 리소스 매니저로는 Apache Spark와 흡사하게 Hadoop YARN 또는 Kubernetes를 사용할 수 있으며, Stand Alone로도 실행 가능하다.
 
 ### Structure
 
@@ -51,7 +55,7 @@ Flink는 크게 두 JVM 프로세스로 나뉜다.
 
 #### 1. Job Manager
 
-Job Manager는 스케쥴러와 체크포인트를 조정할 뿐만 아니라, 어플리케이션이 분산되어 실행될 수 있도록 다양한 역할을 수행하게 된다. Job 실행을 위해서는 최소 하나 이상이 필요하며, HA 구성이 필요하다면 둘 이상으로 운영될 수 있다.
+Job Manager는 스케쥴러와 체크포인트를 조정할 뿐만 아니라, 애플리케이션이 분산되어 실행될 수 있도록 다양한 역할을 수행하게 된다. Job 실행을 위해서는 최소 하나 이상이 필요하며, HA 구성이 필요하다면 둘 이상으로 운영될 수 있다.
 
 **Resource Manager**
 
@@ -111,16 +115,18 @@ Flink에서는 서로 다른 Task의 Subtask라도 같은 Job이기만 하면 Ta
 
 - 리소스 사용률을 높일 수 있다. 만약 Slot Sharing 없이 Slot `A`에서는 `source/map()` operator들만, Slot `B`에서는 `keyBy()` operator들만 처리한다면 리소스 집약적 연산이 이루어지는 Slot `B`의 처리가 끝날때까지 Slot `A`의 리소스는 쉬게 된다. 따라서 Slot을 공유하여 무거운 Subtask들을 Slot들끼리 분배할 수 있으면 리소스를 더 잘 활용할 수 있게 된다.
 
+---
+
 ## Application Execution
 
 Flink에서는 Job을 제출할 때 목적에 따라 서로 다른 방식으로 Flink Application을 실행시킬 수 있다. 이러한 방식들은 실제로 처리를 수행할 클러스터의 수명 주기 및 리소스 격리에 따라 구분된다.
 
 ### Flink Application Cluster
 
-Flink Application Cluster는 Client에서 Job을 제출할 필요 없이 클러스터 내부에서 단일 어플리케이션의 Job들을 실행시키는 방식이다. 즉, 클러스터는 어플리케이션 실행만을 목적으로 프로비저닝되는 dedicated cluster이며, 어플리케이션 로직과 종속성이 담긴 JAR 파일을 패키징 해두면 클러스터의 entrypoint가 `main()` 메서드를 호출하여 패키지 속에서 JobGraph를 추출한다.
+Flink Application Cluster는 Client에서 Job을 제출할 필요 없이 클러스터 내부에서 단일 애플리케이션의 Job들을 실행시키는 방식이다. 즉, 클러스터는 특정 애플리케이션 실행만을 목적으로 프로비저닝되는 dedicated cluster이며, 애플리케이션 로직과 종속성이 담긴 JAR 파일을 패키징 해두면 클러스터의 entrypoint가 `main()` 메서드를 호출하여 패키지 속에서 JobGraph를 추출한다.
 
 **Life Cycle**
-- 클러스터 수명 주기 = 어플리케이션 수명 주기
+- 클러스터 수명 주기 = 애플리케이션 수명 주기
 
 **Resource Isolation**
 - ResourceManager 및 Dispatcher는 단일 Flink Application으로 범위가 지정되어 Flink Session Cluster보다 문제를 더 효과적으로 격리할 수 있다.
@@ -136,6 +142,35 @@ Flink Session Cluster는 Client에서 여러 Job들을 제출하도록 허용하
 - Task Manager 슬롯은 작업 제출 시 Resource Manager에 의해 할당되고 Job이 완료되면 해제된다. 모든 Job이 동일한 클러스터를 공유하기 때문에 클러스터 리소스 경쟁이 존재한다.
 - 어떤 Task Manager에 충돌이 발생하면 그곳에서 실행 중인 모든 Job들이 실패한다. 즉, 어떤 Job이 한 Task Manager에 문제를 일으키면 다른 Job에 영향을 미칠 수도 있다.
 
-#### Other Consideration
+---
 
-기타 고려 사항 : 기존 클러스터가 있으면 리소스를 신청하고 TaskManager를 시작하는 데 상당한 시간이 절약됩니다. 이는 작업 실행 시간이 매우 짧고 시작 시간이 길면 엔드투엔드 사용자 경험에 부정적인 영향을 미칠 수 있는 시나리오에서 중요합니다. 짧은 쿼리에 대한 대화형 분석의 경우와 같이 작업을 빠르게 수행하는 것이 바람직합니다. 기존 리소스를 사용하여 계산을 수행합니다.
+## Flink API
+
+Flink는 streaming / batch 애플리케이션 개발을 위한 다양한 수준의 추상화를 제공하고 있다.
+
+![image_04](/assets/img/posts/2024-03-03/image_04.png){: width="600" height="400" }
+
+#### 1. Stateful & Timely Stream Processing
+
+이 수준에서 사용자는 State Backend를 통해 하나 이상의 스트림에서 이벤트를 자유롭게 처리할 수 있다. Checkpoint와 Savepoint를 이용하면 처리에 필요한 state를 일관적이고 내결함성 있게 다룰 수 있다. 또 Event Time과 Processing Time을 이용하면 더 정교한 로직을 구현할 수 있고 메시지 지연에 효과적으로 대응할 수 있다.
+
+#### 2. DataStream & DataSet API
+
+Core API 인 DataStream API을 사용하면 UDF, aggregation, window 등 데이터 처리를 위한 요소들을 사용할 수 있다. Java 및 Scala 등의 프로그래밍 언어 형태로 제공된다.
+
+DataSet API는 루프/반복이 필요한 경우처럼 bounded dataset를 처리하기 위한 추가적인 요소를 제공한다.
+
+#### 3. Table API
+
+Table API는 테이블 기반의 선언적 DSL로, 스키마가 지정된 테이블이 어떤 논리적 작업을 수행해야 하는지 선언적으로 정의한다. Core API 보다는 로직을 표현할 수 있는 범위가 좁지만 UDF를 통해 어느정도 확장 가능하다. 또한 Spark DataFrame API처럼 실행되기 전 최적화 과정도 거친다.
+
+테이블과 DataStream / DataSet 간의 변환이 가능하다.
+
+#### 4. SQL
+
+Flink가 제공하는 최고 수준의 추상화로, streaming 및 batch 처리 로직을 SQL로 구현할 수 있다. Spark DataFrame과 Spark SQL의 관계와 마찬가지로 Table API 대신 SQL을 사용해 테이블을 조작할 수 있다. 로직을 SQL 형태로 구현해야 하기 때문에 표현 가능한 로직의 범위가 가장 좁을 수 밖에 없다.
+
+---
+
+## Reference
+- [Apache Flink Documentation](https://nightlies.apache.org/flink/flink-docs-release-1.18/){: target="_blank"}
