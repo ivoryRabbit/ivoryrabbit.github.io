@@ -15,9 +15,9 @@ H4 { color: #C7A579 }
 
 Trino는 대용량 데이터 셋을 여러 서버에 걸쳐 병렬로 처리하기 위한 분산 쿼리 엔진으로, HDFS 뿐만 아니라 MySQL, Kafka, Cassandra 등 다양한 종류의 데이터 소스를 지원하여 많은 사람들에게 사랑받고 있는 오픈 소스이다.
 
-Trino Cluster는 하나의 Coordinator와 복수의 Workers로 구성되어 있는데, 사용자가 쿼리를 날리면 Coordinator가 전달 받은 SQL를 분석하여 실행 계획을 세우게 된다. 그러면 Worker들이 실행 계획에 따라 작업을 수행하고 그 결과를 Coordinator를 통해 사용자에게 전달한다.
+Trino Cluster는 하나의 Coordinator와 복수의 Workers로 구성되어 있는데, 사용자가 쿼리를 날리면 Coordinator가 전달 받은 SQL를 분석하여 실행 계획을 세운다. 그러면 Worker들이 실행 계획에 따라 작업을 수행하고 그 결과를 Coordinator를 통해 사용자에게 전달한다.
 
-일단 작업이 시작되면 하나의 쿼리는 여러 "stage"로 나뉘어 순차적으로 실행되며 Coordinator는 Worker들과의 API 통신을 통해 작업 경과를 보고 받는다. 그리고 Spark와 마찬가지로 "Shuffle"을 위해 Worker 끼리 통신을 하기도 한다.
+일단 작업이 시작되면 하나의 쿼리는 여러 **Stage**로 나뉘어 순차적으로 실행되며 Coordinator는 Worker들과의 API 통신을 통해 작업 경과를 보고 받는다. 또한 Spark 처럼 "Shuffle"을 위해 Worker들끼리 통신을 하기도 한다.
 
 Trino의 아키텍처와 동작 방식과 관련해서는 2023 Naver Deview에서 발표된 적이 있다.
 - [발표 영상](https://tv.naver.com/v/33862499){: target="_blank"}
@@ -37,17 +37,17 @@ Trino Gateway 또한 Trino와 마찬가지로 Presto Gateway로부터 fork되어
 
 분석 환경을 굳이 구분하자면, 적시적인 데이터 분석을 위해 상시로 쿼리가 실행되는 "Adhoc" 환경과 데이터 마트 또는 머신러닝을 위해 배포된 파이프라인이 실행되는 "Production" 환경 두 가지가 있을 수 있다.
 
-두 개발 환경 모두가 같은 Trino Cluster를 사용하게 된다면 특정 시간에 스케쥴링된 Production 환경의 작업들이 Adhoc하게 실행되는 쿼리들로 인해 방해 받을 수 있다.
+두 개발 환경 모두가 같은 Trino Cluster를 사용하는 상황이라면 특정 시간에 스케쥴링된 Production 환경의 작업들이 Adhoc하게 실행되는 쿼리들로 인해 방해 받을 수 있다.
 
-이를 방지하기 위해서는 두 개 이상의 클러스터를 운영하여 각 환경이 목적에 맞는 Trino 서버에 접근할 수 있도록 분리하는 것이 좋다. 이때 Trino Gateway를 사용하면 사용자들에게는 하나의 URL만 제공하되 환경 별로, 혹은 사용자 별로 연결을 통제할 수 있기 때문에 관리에 용이하다.
+이를 방지하기 위해서는 두 개 이상의 클러스터를 운영하여 각 환경이 목적에 맞는 Trino 서버에 접근할 수 있도록 분리하는 것이 좋다. 이때 Trino Gateway를 사용하면 사용자들에게는 하나의 URL만 제공하되, 환경 별로 혹은 사용자 별로 연결을 통제할 수 있기 때문에 관리에 용이하다.
 
 ### 2. Blue / Green Deployment
 
 Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 위해 서버가 상시적으로 띄워져 있을 가능성이 높다. 
 
-이 때 만약 클러스터를 업그레이드 하거나 새로운 노드로 교체하고자 한다면 Trino Gateway를 이용해 Blue / Green 배포가 가능하다. 새로운 클러스터 서버를 띄운 후 API를 통해 Trino Gateway에서 교체하고자 하는 서버와 같은 Routing Group에 등록해주면 된다.
+여기서 만약 클러스터를 업그레이드 하거나 새로운 노드로 교체하고자 한다면 Trino Gateway를 이용해 Blue / Green 배포가 가능하다. 새로운 클러스터 서버를 띄운 후 API를 통해 Trino Gateway에서 교체하고자 하는 서버와 같은 Routing Group에 등록해주면 된다.
 
-클러스터가 Trino Gateway에 한번 등록된 이후에도 API를 통해 해당 클러스터의 Routing Group을 변경하거나 비활성화를 위해 Graceful Shutdown 시키는 것도 가능하다.
+클러스터가 Trino Gateway에 등록된 이후에도 API를 통해 해당 클러스터의 Routing Group을 변경하거나 비활성화를 위해 Graceful Shutdown 시키는 것이 가능하다.
 
 ## Let's Practice
 
@@ -55,7 +55,7 @@ Trino Cluster를 사용하고 있다면 온디맨드 서비스를 제공하기 �
 > - [https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino](https://github.com/ivoryRabbit/play-data-with-docker/tree/master/trino){: target="_blank"}
 {: .prompt-tip }
 
-현업에서 Trino Gateway를 도입해야할 만큼 여러 클러스터를 운영해 볼 기회는 극히 드물다. 따라서 Docker를 이용해 서버를 띄워보고, "아 이런게 있구나!" 정도로만 실습해보려 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고, Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 세팅해야 한다.
+현업에서 Trino Gateway를 도입해야할 만큼 여러 클러스터를 운영해 볼 기회는 극히 드물다. 따라서 Docker를 이용해 서버를 띄워보고 "아 이런게 있구나!" 정도로만 실습해보려 한다. Trino Gateway를 띄우려면 다수의 Trino Cluster가 필요하고, Trino Cluster를 띄우기 위해서는 데이터가 저장될 Object Storage와 Hive Metastore를 세팅해야 한다.
 
 전체적인 시스템 디자인을 그려보면 다음과 같다.
 
@@ -97,7 +97,7 @@ postgres:
       - ./docker/postgres/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
 ```
 
-다음으로는 Trino가 테이블 및 파티션 정보를 저장하고 조회할 Hive Metastore를 구성한다. Starburst의 도커 이미지를 사용하면 `.env` 파일에 S3 엔드포인트와 Postgres 서버 정보를 환경 변수에 등록하여 Hive Metastore에 접근 가능하도록 설정할 수 있다.
+다음으로는 Trino가 테이블 및 파티션 정보를 저장하고 조회할 Hive Metastore를 구성한다. Starburst의 도커 이미지를 사용하면 `.env` 파일에 S3 엔드포인트와 Postgres 서버 정보를 환경 변수에 등록하여 Hive Metastore가 접근할 수 있도록 설정할 수 있다.
 
 ```yaml
 hive-metastore:
@@ -208,7 +208,7 @@ dodcker compose up #  또는 docker-compose up
 
 ### 3. Rest API
 
-Trino Cluster와 Trino Gateway 서버가 무사히 띄워졌다면 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또 query parameter를 조작하여 등록과 삭제가 가능하며 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
+Trino Cluster와 Trino Gateway 서버가 무사히 띄워진 후에는 Rest API를 이용해 클러스터를 서버에 등록할 수 있다. 또 query parameter를 조작하여 등록과 삭제가 가능하며 등록한 Trino Cluster를 비활성화 시키는 것도 가능하다.
 
 #### [register-trino-1.json]
 
@@ -232,7 +232,7 @@ curl -H "Content-Type: application/json" \
 
 ![image_02](/assets/img/posts/2024-01-21/image_02.png){: width="800" height="400" }
 
-앞서 설명한대로, Routing Rule을 설정하면 사용자 별로 서로 다른 클러스터로 라우팅하는 것이 가능하다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리가 실행되도록 할 수 있다. 또한 yaml 파일만 수정하면 서버를 내리지 않고도 언제든지 라우팅 룰을 추가 및 변경할 수 있다.
+앞서 설명한대로 Routing Rule을 구성하면 사용자 별로 서로 다른 클러스터로 라우팅할 수 있다. 예를 들어 "airflow" 라는 계정으로 SQL을 날리면 Routing Group이 "etl"인 클러스터에서 쿼리가 실행되도록 할 수 있다. 또한 yaml 파일만 수정하면 서버를 내리지 않고도 언제든지 라우팅 룰을 추가 및 변경할 수 있다.
 
 #### [routing-rule.yaml]
 
@@ -244,6 +244,6 @@ actions:
     - 'result.put("routingGroup", "etl")'
 ```
 
-Trino UI(http://localhost:8080/ui)에서 쿼리 내역을 살펴보면 `admin` 유저는 `trino-1` 클러스터로, `airflow` 유저는 `trino-2` 클러스터로 라우팅되었음을 확인할 수 있다.
+Trino UI(http://localhost:8080/ui)에서 쿼리 내역을 살펴보면 "admin" 유저는 "trino-1" 클러스터로, "airflow" 유저는 "trino-2" 클러스터로 라우팅되었음을 확인할 수 있다.
 
 ![image_03](/assets/img/posts/2024-01-21/image_03.png){: width="800" height="400" }
