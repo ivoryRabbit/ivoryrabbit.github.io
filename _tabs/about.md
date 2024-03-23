@@ -22,10 +22,16 @@ order: 4
 ### Department of
 - Mathematical Sciences
 
-### Research & Experience
-- Radon Numbers and the Fractional Helly Theorem (2020)
+### Experiences with
+- E-Commerce (2021 ~ Now)
 - Korean Combat Training Center (2019 ~ 2021)
+- Teaching Assistant (2017 ~ 2019)
+- Night School Teacher (2012 ~ 2013)
 
-### My favorites
-- Music
+### Researches
+- Radon Numbers and the Fractional Helly Theorem (2020)
+
+### Favorites
+- Rock & Indie
 - Cat
+- Caffeine
