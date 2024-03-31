@@ -11,7 +11,7 @@ H3 { color: #1e7ed2 }
 H4 { color: #C7A579 }
 </style>
 
-이전 글에 이어 이번에는 Apache Flink를 띄우고 테스트해보려고 한다. Kafka와 Flink를 Docker Container로 배포한 후 간단한 Job을 제출하여 스트리밍 애플리케이션이 잘 작동하는지 확인해볼 예정이다.
+이전 글에 이어 이번에는 Apache Flink를 띄우고 테스트해보려고 한다. Kafka와 Flink를 Docker Container에 배포한 후 간단한 Job을 제출하여 스트리밍 애플리케이션이 잘 작동하는지 확인해볼 예정이다.
 
 ## Practice
 
@@ -74,7 +74,7 @@ kafka-ui:
 
 ![image_02](/assets/img/posts/2024-03-30/image_02.png){: width="600" height="400" }
 
-Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토픽을 생성할 수 있다. Partition 및 Replica 개수는 대충 1개로 설정하자. 이때 Flink 애플리케이션의 input과 output을 구별하기 위해 토픽을 2개를 생성하자.
+Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토픽을 생성할 수 있다. Partition 및 Replica 개수는 대충 1개로 설정하자. 이때 Flink 애플리케이션의 input과 output을 구별하기 위해 토픽은 2개를 생성해두자.
 - input.flink.dev
 - output.flink.dev
 
@@ -82,7 +82,7 @@ Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토�
 
 #### Flink
 
-Flink는 Job Manager와 Task Manager 역할을 하는 컨테이너를 각각 따로 배포하였다. 이때 Job Manager에는 `8081` port를 뚫어주어 Flink Dashboard에 접근 가능하게 한다.
+Flink는 Job Manager와 Task Manager 역할을 하는 컨테이너를 각각 따로 배포하였다. 이때 Job Manager의 `8081` port를 뚫어주어 Flink Dashboard에 접근 가능하게 하자.
 
 ```yaml
 flink-jobmanager:
@@ -112,7 +112,7 @@ flink-taskmanager:
     - ./docker/volume/flink/taskmanager:/data/flink
 ```
 
-Flink 공식 이미지 뿐만아니라 Scala 및 Kafka 관련 의존성을 추가할 필요가 있다. 따라서 별도의 Dockerfile을 만들어 의존성을 구성하고 yaml파일에서 빌드할 수 있도록 한다.
+Flink 공식 이미지 뿐만아니라 Scala 및 Kafka 관련 의존성을 추가할 필요가 있다. 따라서 별도의 Dockerfile을 만들어 의존성을 구성하고 yaml 파일에서 빌드할 수 있도록 한다.
 
 ```docker
 FROM flink:1.18.1-scala_2.12-java11
@@ -173,18 +173,19 @@ object Job {
 }
 ```
 
-sbt를 이용해 컴파일한 후, API를 이용해 jar 파일을 Job Manager로 업로드 해준다. Flink Dashboard의 `Submit New Job` >> `Add New` 버튼을 클릭하여 메뉴얼하게 업로드하는 것도 가능하다.
+sbt를 이용해 컴파일한 후, API를 호출하여 jar 파일을 Job Manager로 업로드 해준다. Flink Dashboard의 `Submit New Job` >> `Add New` 버튼을 클릭하여 메뉴얼하게 업로드하는 것도 가능하다.
 
 ```bash
 sbt clean assembly
 curl -X POST http://localhost:8081/v1/jars/upload -H "Expect:" -F "jarfile=@./target/scala-2.12/flink-dev-assembly-0.1-SNAPSHOT.jar"
 ```
 
-jar 파일을 업로드하면 다음과 같이 Job을 제출할 수 있다. 실행시킬 Entrypoint를 기입하고 `Submit` 버튼을 누르면 Job이 실행된다.
+jar 파일을 업로드하면 다음과 같이 Job을 제출할 수 있다. 실행시킬 Entrypoint를 기입하고 `Submit` 버튼을 누르면 Job이 실행된다. 마찬가지로 메뉴얼하게 실행하는 대신 REST API를 사용할 수도 있다.
+- [Flink REST API](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/ops/rest_api/#jars-jarid-run){: target="_blank"}
 
 ![image_05](/assets/img/posts/2024-03-30/image_05.png){: width="600" height="400" }
 
-Kafka와 통신에 성공하면 Kafka UI에서 consumer group이 잘 등록되었는지 확인할 수 있다.
+Kafka와 통신에 성공하면 Kafka UI에서 consumer group이 잘 등록되었는지 확인할 수 있다. 
 
 ![image_06](/assets/img/posts/2024-03-30/image_06.png){: width="600" height="400" }
 
