@@ -11,12 +11,14 @@ H3 { color: #1e7ed2 }
 H4 { color: #C7A579 }
 </style>
 
-이전 글에 이어 이번에는 Flink를 띄우고 테스트해보려고 한다. Kafka와 Flink를 Docker Container로 배포한 후 간단한 Job을 제출하여 스트리밍 애플리케이션이 잘 작동하는지 확인한다.
+이전 글에 이어 이번에는 Apache Flink를 띄우고 테스트해보려고 한다. Kafka와 Flink를 Docker Container로 배포한 후 간단한 Job을 제출하여 스트리밍 애플리케이션이 잘 작동하는지 확인해볼 예정이다.
 
 ## Practice
 
+최소한의 구현으로 Flink를 테스트하기 위해서 다음과 같이 시스템을 구성하였다.
+
 1. Kafka 메시지의 발행과 구독은 콘솔을 이용한다.
-2. Kafka topic 및 consumer 생성은 Kafka UI를 통해 확인한다.
+2. Kafka topic 및 consumer group 생성은 Kafka UI를 통해 확인한다.
 3. Flink 애플리케이션은 Scala로 구현한다.
 
 ![image_01](/assets/img/posts/2024-03-30/image_01.png){: width="600" height="400" }
@@ -29,7 +31,7 @@ H4 { color: #C7A579 }
 
 #### Kafka
 
-실습이므로 카프카 브로커 개수는 1개, zookeeper를 별도로 띄우지 않기 위해 KRaft 지원이 가능한 3.4.1 버전 사용
+메시지 큐로는 Flink와 함께 가장 많이 사용되는 Apache Kafka를 선택하였다. 실습에선 분산 환경이 필요없으므로 1개의 브로커만 구성하였고, zookeeper를 별도로 띄우지 않기 위해 KRaft 사용이 가능한 3.4.1 버전을 선택하였다.
 
 ```yaml
 kafka:
@@ -53,9 +55,7 @@ kafka:
 
 #### Kafka UI
 
-CLI 커맨드 작성이 귀찮으므로 kafka UI 사용
-
-`DYNAMIC_CONFIG_ENABLED`를 사용하면 클러스터 등록/제거가 편리
+브로커를 모니터링하고 토픽을 간편하게 제어하기 위해서 Kafka UI를 사용하였다. 이때 `DYNAMIC_CONFIG_ENABLED`를 활성화하여 클러스터 등록/제거를 편리하게 할 수 있었다.
 
 ```yaml
 kafka-ui:
@@ -68,17 +68,21 @@ kafka-ui:
     - DYNAMIC_CONFIG_ENABLED=true
   volumes:
     - ./docker/kafka-ui/config.yml:/etc/kafkaui/dynamic_config.yaml
-  healthcheck:
-    test: wget --no-verbose --tries=1 --spider localhost:8080 || exit 1
-    interval: 5s
-    timeout: 10s
-    retries: 3
-    start_period: 30s
 ```
+
+[localhost:8080](http://localhost:8080/){: target="_blank"}에 접속하면 Kafka UI를 확인할 수 있다.
+
+![image_02](/assets/img/posts/2024-03-30/image_02.png){: width="600" height="400" }
+
+Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토픽을 생성할 수 있다. Partition 및 Replica 개수는 대충 1개로 설정하자. 이때 Flink 애플리케이션의 input과 output을 구별하기 위해 토픽을 2개를 생성하자.
+- input.flink.dev
+- output.flink.dev
+
+![image_03](/assets/img/posts/2024-03-30/image_03.png){: width="600" height="400" }
 
 #### Flink
 
-Flink는 jobmanager와 taskmanager 역할을 하는 컨테이너를 각각 배포. jobmanager는 port를 뚫어준다
+Flink는 Job Manager와 Task Manager 역할을 하는 컨테이너를 각각 따로 배포하였다. 이때 Job Manager에는 `8081` port를 뚫어주어 Flink Dashboard에 접근 가능하게 한다.
 
 ```yaml
 flink-jobmanager:
@@ -108,35 +112,30 @@ flink-taskmanager:
     - ./docker/volume/flink/taskmanager:/data/flink
 ```
 
-Scala 및 Kafka 관련 의존성을 이미지에 포함시켜주어야 함
+Flink 공식 이미지 뿐만아니라 Scala 및 Kafka 관련 의존성을 추가할 필요가 있다. 따라서 별도의 Dockerfile을 만들어 의존성을 구성하고 yaml파일에서 빌드할 수 있도록 한다.
 
 ```docker
 FROM flink:1.18.1-scala_2.12-java11
 
-ENV FLINK_VERSION=1.18.1
-ENV FLINK_CONNECTOR_VERSION=1.17.2
-ENV KAFKA_VERSION=3.4.1
-
-RUN curl -L https://repo1.maven.org/maven2/org/apache/flink/flink-streaming-scala/${FLINK_VERSION}/flink-streaming-scala-${FLINK_VERSION}.jar \
-    -o ${FLINK_HOME}/lib/flink-streaming-scala-${FLINK_VERSION}.jar
-RUN curl -L https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka/${FLINK_CONNECTOR_VERSION}/flink-connector-kafka-${FLINK_CONNECTOR_VERSION}.jar \
-    -o ${FLINK_HOME}/lib/flink-connector-kafka-${FLINK_CONNECTOR_VERSION}.jar
-RUN curl -L https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/${KAFKA_VERSION}/kafka-clients-${KAFKA_VERSION}.jar \
-    -o ${FLINK_HOME}/lib/kafka-clients-${KAFKA_VERSION}.jar
+RUN curl -L https://repo1.maven.org/maven2/org/apache/flink/flink-streaming-scala/1.18.1/flink-streaming-scala-1.18.1.jar \
+    -o ${FLINK_HOME}/lib/flink-streaming-scala-1.18.1.jar
+RUN curl -L https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka/1.17.2/flink-connector-kafka-1.17.2.jar \
+    -o ${FLINK_HOME}/lib/flink-connector-kafka-1.17.2.jar
+RUN curl -L https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.4.1/kafka-clients-3.4.1.jar \
+    -o ${FLINK_HOME}/lib/kafka-clients-3.4.1.jar
 RUN curl -L https://repo1.maven.org/maven2/org/apache/flink/flink-shaded-guava/30.1.1-jre-16.1/flink-shaded-guava-30.1.1-jre-16.1.jar \
     -o ${FLINK_HOME}/lib/flink-shaded-guava-30.1.1-jre-16.1.jar
 ```
 
-확인
+Flink Job Manager를 띄우는데 성공했다면 [localhost:8081](http://localhost:8081/){: target="_blank"}에 접속하여 Task Manager 상태를 확인할 수 있다.
 
-Kafka UI 스크린샷
-
-Flink UI 스크린샷
-
-
-토픽 생성
+![image_04](/assets/img/posts/2024-03-30/image_04.png){: width="600" height="400" }
 
 ## Applications
+
+이제 Flink Application을 구현하고 제출해보자. PyFlink 대신 데이터 엔지니어에게 좀 더 익숙한(?) Scala를 사용하였는데 생각보다 레퍼런스가 부족해 애를 먹었다. ~~후 너넨 이런거 피지 마라~~
+
+`flink-connector-kafka` 의존성의 KafkaSource, KafkaSink를 이용하면 애플리케이션을 쉽게 구현할 수 있다. Consumer group 설정에 필요한 property들도 빌더 패턴을 통해 쉽게 주입할 수 있다.
 
 ```scala
 object Job {
@@ -165,6 +164,7 @@ object Job {
       .build()
 
     val streamLines = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Kafka Sink")
+    
     streamLines.print()
     streamLines.sinkTo(kafkaSink)
 
@@ -173,22 +173,22 @@ object Job {
 }
 ```
 
-sbt를 이용해 컴파일
+sbt를 이용해 컴파일한 후, API를 이용해 jar 파일을 Job Manager로 업로드 해준다. Flink Dashboard의 `Submit New Job` >> `Add New` 버튼을 클릭하여 메뉴얼하게 업로드하는 것도 가능하다.
 
 ```bash
 sbt clean assembly
-```
-
-jar 파일을 flink jobmanager로 업로드
-
-```bash
 curl -X POST http://localhost:8081/v1/jars/upload -H "Expect:" -F "jarfile=@./target/scala-2.12/flink-dev-assembly-0.1-SNAPSHOT.jar"
 ```
 
-job 제출 스크린샷
+jar 파일을 업로드하면 다음과 같이 Job을 제출할 수 있다. 실행시킬 Entrypoint를 기입하고 `Submit` 버튼을 누르면 Job이 실행된다.
 
-consumer group이 등록되었는지 kafka ui로 확인
-스크린샷
+![image_05](/assets/img/posts/2024-03-30/image_05.png){: width="600" height="400" }
+
+Kafka와 통신에 성공하면 Kafka UI에서 consumer group이 잘 등록되었는지 확인할 수 있다.
+
+![image_06](/assets/img/posts/2024-03-30/image_06.png){: width="600" height="400" }
+
+이제 콘솔로 Kafka Producer와 Consumer를 띄워 메시지가 잘 전달되는지 살펴보자. 테스트는 로컬에서 진행하였으며, input과 output 토픽을 분리하여 Flink Application이 잘 동작하는지 확인하였다.
 
 #### Kafka console producer
 
@@ -202,4 +202,6 @@ kafka-console-producer --broker-list localhost:9094 --topic input.flink.dev
 kafka-console-consumer --bootstrap-server localhost:9094 --topic output.flink.dev
 ```
 
-메시지 발행 및 구독 스크린샷
+약간의 지연시간은 존재하지만 다른 토픽으로 메시지가 무사히 전달되는지 확인할 수 있다.
+
+![image_07](/assets/img/posts/2024-03-30/image_07.png){: width="600" height="400" }
