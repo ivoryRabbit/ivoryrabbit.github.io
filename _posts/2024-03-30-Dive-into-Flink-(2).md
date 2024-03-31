@@ -74,7 +74,7 @@ kafka-ui:
 
 ![image_02](/assets/img/posts/2024-03-30/image_02.png){: width="600" height="400" }
 
-Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토픽을 생성할 수 있다. Partition 및 Replica 개수는 대충 1개로 설정하자. 이때 Flink 애플리케이션의 input과 output을 구별하기 위해 토픽은 2개를 생성해두자.
+Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토픽을 생성할 수 있다. Partition 및 Replica 개수는 대충 1개로 설정하였으며, Flink 애플리케이션의 input과 output을 구별하기 위해 토픽은 2개를 생성하였다.
 - input.flink.dev
 - output.flink.dev
 
@@ -82,7 +82,7 @@ Dashboard에서 `Topics` >> `Add a Topic` 버튼을 클릭하면 새로운 토�
 
 #### Flink
 
-Flink는 Job Manager와 Task Manager 역할을 하는 컨테이너를 각각 따로 배포하였다. 이때 Job Manager의 `8081` port를 뚫어주어 Flink Dashboard에 접근 가능하게 하자.
+Flink는 Job Manager와 Task Manager 역할을 하는 컨테이너를 각각 따로 배포하였다. 이때 Job Manager의 `8081` port를 뚫어주어 Flink Dashboard에 접근 가능하도록 만든다.
 
 ```yaml
 flink-jobmanager:
@@ -203,6 +203,6 @@ kafka-console-producer --broker-list localhost:9094 --topic input.flink.dev
 kafka-console-consumer --bootstrap-server localhost:9094 --topic output.flink.dev
 ```
 
-약간의 지연시간은 존재하지만 다른 토픽으로 메시지가 무사히 전달되는지 확인할 수 있다.
+약간의 지연시간은 존재하지만 다른 토픽으로 메시지가 무사히 전달되는지 확인할 수 있었다.
 
 ![image_07](/assets/img/posts/2024-03-30/image_07.png){: width="600" height="400" }
