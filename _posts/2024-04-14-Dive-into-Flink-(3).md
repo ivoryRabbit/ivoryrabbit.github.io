@@ -17,7 +17,7 @@ H4 { color: #C7A579 }
 
 - [https://cwiki.apache.org/confluence/display/FLINK/FLIP-265+Deprecate+and+remove+Scala+API+support](https://cwiki.apache.org/confluence/display/FLINK/FLIP-265+Deprecate+and+remove+Scala+API+support){: target="_blank"}
 
-따라서 Scala 용 의존성을 모조리 걷어내고 Java 용 의존성으로 교체하는 작업을 먼저 진행하였다.
+따라서 Scala 용 의존성을 모조리 걷어내고 Java 용 의존성으로 교체하는 작업을 먼저 진행하였다. 이후 꼭 필요한 의존성만 추려내면 다음과 같다.
 
 ```scala
 libraryDependencies ++= Seq(
@@ -38,7 +38,7 @@ libraryDependencies ++= Seq(
 
 ### Kafka Producer
 
-지난 글과는 달리 실제와 비슷한 메시지를 Kafka로 전송하기 위해 간단한 API 서버를 개발하였다. 사용자들이 영화에 평점을 매기면, 이 평점 데이터를 Kafka로 전송하는 상황을 가정하고 MovieLens 데이터를 붓기로 한다.
+지난 글과는 달리 실제와 비슷한 메시지를 Kafka로 전송하기 위해 간단한 API 서버를 개발하였다. 사용자들이 영화에 평점을 매기면 이 평점 데이터를 Kafka로 전송하는 상황을 가정하고, 데이터로는 MovieLens를 사용하였다.
 
 먼저 pydantic을 이용해 DTO를 정의해준다.
 
@@ -83,7 +83,7 @@ kafka-producer:
 
 ![image_01](/assets/img/posts/2024-04-14/image_01.png){: width="600" height="400" }
 
-이후 MovieLens 데이터를 다운로드한 후, pandas로 읽어 자동으로 request를 날리는 파이썬 스크립트를 작성한다.
+이후 MovieLens 데이터를 다운로드한 후, pandas로 읽어 자동으로 request를 날리는 파이썬 스크립트를 작성한다. 이 스크립트를 실행하면 평점 데이터가 json 형태로 kafka에게 전송된다.
 
 ```python
 if __name__ == "__main__":
@@ -107,7 +107,15 @@ if __name__ == "__main__":
 
 ### Flink SQL API
 
-스트리밍 애플리케이션 구현 시 SQL API를 이용하면, 데이터 소스와 필드 구조를 간단한 쿼리 구문으로 쉽게 선언할 수 있었다.
+스트리밍 애플리케이션 구현 시 SQL API를 이용하면, 데이터 소스와 필드 구조를 간단한 쿼리 구문으로 쉽게 선언할 수 있었다. 기존 Dataset API에서 `StreamTableEnvironment`를 추가해주면 된다. 커넥터 및 Serde와 관련된 라이브러리를 직접 호출하지 않아도 되기 때문에 코드가 Dataset에 비해 간결해진다.
+
+```scala
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment
+
+val env = StreamExecutionEnvironment.getExecutionEnvironment
+val tableEnv: StreamTableEnvironment = StreamTableEnvironment.create(env)
+```
 
 아래의 코드처럼 전송 받을 메시지의 필드와 커넥터, format 등을 table property로 구성할 수 있다. 데이터를 받아올 source와 데이터를 넘겨줄 sink 각각 테이블을 생성해야 한다.
 
@@ -147,11 +155,11 @@ tableEnv.executeSql(
 )
 ```
 
-Job을 실행하고 나면 테이블 Web UI에서 아래와 같은 실행 계획을 볼 수 있다.
+컴파일 후 Jar를 업로드하고 Job을 실행하면, 테이블 Web UI에서 아래와 같은 실행 계획을 볼 수 있다.
 
 ![image_02](/assets/img/posts/2024-04-14/image_02.png){: width="600" height="400" }
 
-이전 글과 마찬가지로 콘솔을 통해 데이터가 처리되고 있는지 확인 할 수 있다. 위에서 작성한 파이썬 스크립트를 통해 데이터를 API 서버로 부으면, Flink에 의해 데이터가 처리되기 전과 후를 살펴볼 수 있다.
+이전 글과 마찬가지로 Job이 잘 실행되고 있는지 확인해 볼 수 있다. 위에서 작성한 파이썬 스크립트를 통해 데이터를 API 서버로 붓고, 콘솔에서 Flink에 의해 데이터가 처리되기 전과 후를 살펴보도록 하자.
 
 #### input.flink.dev
 
