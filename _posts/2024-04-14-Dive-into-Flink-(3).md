@@ -38,7 +38,7 @@ libraryDependencies ++= Seq(
 
 ### Kafka Producer
 
-지난 글과는 달리 실제와 비슷한 메시지를 Kafka로 전송하기 위해 간단한 API 서버를 개발하였다. 사용자들이 영화에 평점을 매기면 이 평점 데이터를 Kafka로 전송하는 상황을 가정하고, 데이터로는 MovieLens를 사용하였다.
+지난 글과는 달리 실제와 비슷한 메시지를 Kafka로 전송하기 위해 FastAPI로 간단한 서버를 개발하였다. 사용자들이 영화에 평점을 매기면 이 평점 데이터를 Kafka로 전송하는 상황을 가정하고, 데이터로는 MovieLens를 사용하였다.
 
 먼저 pydantic을 이용해 DTO를 정의해준다.
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
 ### Flink SQL API
 
-스트리밍 애플리케이션 구현 시 SQL API를 이용하면, 데이터 소스와 필드 구조를 간단한 쿼리 구문으로 쉽게 선언할 수 있었다. 기존 Dataset API에서 `StreamTableEnvironment`를 추가해주면 된다. 커넥터 및 Serde와 관련된 라이브러리를 직접 호출하지 않아도 되기 때문에 코드가 Dataset에 비해 간결해진다.
+스트리밍 애플리케이션 구현 시 SQL API를 이용하면, 데이터 소스와 필드 구조를 간단한 쿼리 구문으로 쉽게 선언할 수 있었다. 기존 Dataset API에서 `StreamTableEnvironment`를 추가해주면 된다. 커넥터 및 Serde와 관련된 라이브러리를 직접 호출하지 않아도 되기 때문에 코드를 Dataset에 비해 간결하게 유지할 수 있다.
 
 ```scala
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
@@ -118,6 +118,8 @@ val tableEnv: StreamTableEnvironment = StreamTableEnvironment.create(env)
 ```
 
 아래의 코드처럼 전송 받을 메시지의 필드와 커넥터, format 등을 table property로 구성할 수 있다. 데이터를 받아올 source와 데이터를 넘겨줄 sink 각각 테이블을 생성해야 한다.
+
+#### source table
 
 ```scala
 tableEnv.executeSql(
@@ -133,6 +135,26 @@ tableEnv.executeSql(
     |   'properties.bootstrap.servers' = 'kafka:9092',
     |   'properties.group.id' = 'flink',
     |   'properties.auto.offset.reset' = 'latest',
+    |   'format' = 'json'
+    | )
+    |""".stripMargin
+)
+```
+
+#### sink table
+
+```scala
+tableEnv.executeSql(
+    """
+    | CREATE TABLE ratings_clean (
+    |   user_id INT,
+    |   movie_id INT,
+    |   rating FLOAT,
+    |   created_at STRING
+    | ) WITH (
+    |   'connector' = 'kafka',
+    |   'topic' = 'output.flink.dev',
+    |   'properties.bootstrap.servers' = 'kafka:9092',
     |   'format' = 'json'
     | )
     |""".stripMargin
