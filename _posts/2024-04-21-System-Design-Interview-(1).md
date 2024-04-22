@@ -6,8 +6,8 @@ comments:     true
 ---
 
 <style>
-H2 { color: #298294 }
-H3 { color: #1e7ed2 }
+H2 { color: #1e7ed2 }
+H3 { color: #298294 }
 H4 { color: #C7A579 }
 </style>
 
@@ -31,7 +31,7 @@ H4 { color: #C7A579 }
 
 데이터베이스로 데이터가 일단 적재되면, 데이터 엔지니어는 데이터를 분석 환경으로 옮기기 위한 데이터 파이프라인을 개발하게 된다. ~~그리고 비극이 시작된다.~~
 
-데이터 엔지니어가 데이터를 얻기 위해 접근할 데이터베이스는 온전히 제품을 사용하는 사용자들을 위한 것이다. 따라서 Data Ingestion을 위해 부하를 주어서는 안되며, 이로인해 발생하는 장애들을 모니터링하고 관리해야 한다. (AWS Zero ETL이 영글어지면 이런 고통이 줄것 같다.)
+데이터 엔지니어가 데이터를 얻기 위해 접근할 데이터베이스는 온전히 제품을 사용하는 사용자들을 위한 것이다. 따라서 Data Ingestion을 위해 부하를 주어서는 안되며, 이로인해 발생하는 장애들을 모니터링하고 관리해야 한다.
 
 또 니즈에 따라 배치/스트림 처리를 선택해야 하며, 스트림 처리가 필요한 경우 어떤 분산 엔진을 선택하여 확장성 있게 운영할 수 있을지 고민해야 한다. 만약 CDC 방식을 이용하고 있다면, 데이터 처리가 실패하고 방치된 경우를 잡아내기 위해 뒷단에 Data Quality를 검증해주는 시스템을 추가해주어야 한다.
 
@@ -81,14 +81,12 @@ H4 { color: #C7A579 }
 시스템에 요구되는 API를 정의하고 요구사항에 잘못된 것은 없는지 점검해야 한다.
 
 - postTweet(user_id, tweet_data, tweet_location, user_location, timestamp, …)
-
 - generateTimeline(user_id, current_time, user_location, …)
-
 - markTweetFavorite (user_id, tweet_id, timestamp, …)
 
 ### Step 3: 규모 어림 잡기
 
-디자인하고자 하는 시스템의 규모를 예상하고 scaling, partitioning, load balancing, caching 전략을 사용할 수 있어야 한다.
+디자인하고자 하는 시스템의 규모를 예상하고 Scaling / Partitioning / Load Balancing / Caching 등의 전략을 사용할 수 있어야 한다.
 
 - 하루 또는 매초 얼마나 많은 트래픽이 발생하는지
 - 얼마나 많은 데이터를 저장해야 하는지
@@ -109,36 +107,42 @@ H4 { color: #C7A579 }
 
 ### Step 5: 디자인 고도화하기
 
-시스템을 구성하는 주요 요소들을 5~6개의 박스를 이용해 다이어그램을 그려보자. 실제 문제를 풀기 위해 필요한 구성 요소를 충분히 고려했는지 확인할 수 있다.
+시스템을 구성하는 주요 요소들을 5~6개의 박스를 이용해 다이어그램을 그려보자. 실제 문제를 풀기 위해 필요한 구성 요소들을 충분히 고려했는지 확인할 수 있다.
 
-(WIP)
+Twitter의 경우 모든 읽기/쓰기 요청을 처리하기 위하여 여러 애플리케이션 서버가 필요하며, 앞단에 Load Balancer를 두어 트래픽을 분산시킨다.
 
-상황에 따라 서버나 트래픽을 분산하기 위한 전략을 고려
+쓰기에 비해 읽기 트래픽이 훨씬 더 많다고 가정한다면, 이러한 시나리오를 해결하기 위해서는 서버를 별도로 분리하는 방법도 있을 것이다.
 
-- 쓰기보다 읽기가 많은 경우 어플리케이션 서버를 분리
-- 트래픽이 많은 경우 replica를 생성하여 load balancing
+백엔드에는 모든 트윗을 저장할 수 있고 대량의 읽기를 지원할 수 있는 효율적인 데이터베이스가 필요하다. 또, 사진과 비디오를 저장하기 위한 분산 파일 저장 시스템도 필요하다.
 
 ### Step 6: 세부적으로 디자인하기
 
-보편적인 방법 이외의 다른 접근 방식을 제시할 수 있어야 하고, 그에 따른 장단점을 설명 가능하며 trade-off를 고려
+앞서 SDI에는 정답이 없으며 다양한 해결 방법이 존재할 수 있다고 했다. 
+
+따라서 우리는 다양한 접근 방식과 그 장단점을 설명할 수 있어야 하고, 시스템의 제약 조건을 염두에 두면서 여러 접근 방식 중 어떤 것을 선택할지 제시할 수 있어야 한다.
+
+- 막대한 양의 데이터를 저장할 때, 여러 데이터베이스에 분산시키기 위해서는 데이터를 어떻게 분할해야 할지
+- 트윗 또는 팔로우가 많은 사용자는 어떻게 처리해야 할지
+- 사용자의 타임라인에 가장 최근(혹은 관련 있는) 트윗이 노출되도록 하려면 어떻게 저장 방식을 최적화해야 할지
+- 속도를 높이기 위해 캐시를 얼마나 많이, 어느 계층에 도입해야 할지
+- Load Balancing이 필요한 컴포넌트가 무엇인지?
 
 ### Step 7: 병목 규정하고 해결하기
 
-설계한 시스템에서 발생할 수 있는 병목에 대해 논의 가능해야 하고 해결 방법을 제시 가능해야 함
+설계한 시스템에서 발생할 수 있는 병목에 관해 설명할 수 있어야 하고 해결 방법을 제시할 수 있어야 한다.
 
 - 단일 장애 지점이 있는지? 이것을 극복할 수 있는 방법은?
-- 유저의 트래픽을 받아내기 위해 얼마나 많은 replica를 운영해야하는지?
-- 전체 시스템이 종료되지 않으려면 얼마나 많은 replica를 준비해야하는지?
+- 유저의 트래픽을 받아내기 위해 얼마나 많은 Replica를 운영해야하는지?
+- 전체 시스템이 종료되지 않으려면 얼마나 많은 Replica를 준비해야하는지?
 - 서비스의 성능이나 장애를 모니터링할 수 있는 방법에는 어떤 것들이 있는지
-
 
 ## System Design Basics
 
-대규모 시스템을 설계할 때 다음과 같은 고민을 하게 된다.
+대규모 시스템을 설계할 때 다음 사항들을 고려해야 한다.
 
-- 우리가 사용할 수 있는 아키텍처 부품에는 어떤 것들이 있는지
-- 아키텍처 부품 간에 어떤 방식으로 작동하는지
-- 아키텍처 부품을 어떻게 잘 활용할 수 있는지, trade-off 고민
+- 사용 가능한 아키텍처 요소에는 어떤 것들이 있는지
+- 아키텍처 요소들 간에 어떤 방식으로 작동하는지
+- 아키텍처 요소들을 어떻게 잘 활용할 수 있는지, trade-off 고민
 
 필요하지 않은데도 확장성에 투자하는 것은 비지니스 적으로 옳지 못함
 
@@ -148,9 +152,9 @@ H4 { color: #C7A579 }
 
 특히 분산 시스템을 이해하는데 도움이 될 것
 
-## Key Characteristics of Distributed Systems
+### Key Characteristics of Distributed Systems
 
-### Scalability
+#### Scalability
 
 - 시스템, 프로세스, 네트워크를 키우고 수요의 증가를 관리할 수 있는가
 - 많은 분산 시스템은 늘어나는 작업량을 감당하기 위해 Scalable(확장성)을 고려하여 발전함
@@ -170,7 +174,7 @@ Horizontal vs. Vertical Scaling
     - 다운타임이 발생할 수 있음
     - ex) MySQL
 
-### Reliability
+#### Reliability
 
 주어진 기간 내에 시스템이 다운될 확률
 
@@ -178,7 +182,7 @@ replica의 개수를 늘리면 하나라도 살아있을 확률이 높아진다.
 
 단일 장애 지점을 극복할 수 있는 방법
 
-### Availability
+#### Availability
 
 주어진 기간 동안 얼마나 요구되는 기능을 길게 수행할 수 있을지에 대한 비율
 
@@ -188,7 +192,7 @@ reliable하면 available하지만, available하다고 해서 반드시 reliable�
 
 - 만약 시스템이 자주 다운되지만 빠르게 복구되는 경우
 
-### Efficiency
+#### Efficiency
 
 latency (response time)
 
@@ -200,13 +204,13 @@ throughput (bandwidth)
 - 초당 얼마나 많은 요청을 처리할 수 있는지
 - asynchronous
 
-### Serviceability or Manageability
+#### Serviceability or Manageability
 
 시스템의 복구 시간이 얼마나 짧은지
 
 문제 발생 시 진단이 빠르고, 파악이 쉬우며 수정이 쉬운지
 
-## Load Balancing
+### Load Balancing
 
 어플리케이션, 웹사이트, 데이터베이스에서 응답 성능을 높이기 위해 클러스터 단위의 서버로의 트래픽을 나누어 주는 분산 시스템
 
@@ -223,7 +227,7 @@ throughput (bandwidth)
 - 더 많은 요청을 처리할 수 있고 유저의 대기 시간을 줄일 수 있다.
 - 시스템 관리자는 덜 실패하고 덜 부하받는 컴포넌트를 경험할 수 있다.
 
-### LB Algorithm
+#### LB Algorithm
 
 - health check
     - 기본적으로 서버의 건강을 주기적으로 체크하고, 만약 건강하지 않은 경우(unhealthy) pool에서 제거하여 트래픽을 보내지 않음
@@ -240,7 +244,7 @@ throughput (bandwidth)
 - IP Hash
     - IP 주소를 hash + modulo ( % node 개수 )하여 트래픽을 전달
 
-### Redundant LB
+#### Redundant LB
 
 로드 밸런서는 그 자체로 단일 장애 지점이 될 수 있다.
 
@@ -250,23 +254,23 @@ throughput (bandwidth)
 
 ![스크린샷 2023-09-25 오후 1.39.36.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4d99b82-e7a7-4181-8500-0b914690785b/ad5eb821-7cbc-4b8f-8e09-5e6502fce201/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA_2023-09-25_%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE_1.39.36.png)
 
-## Caching
+### Caching
 
 LB가 수평적 확장을 통해 도움을 준다면, 캐싱은 이미 만들어진 리소스를 잘 사용할 수 있도록 한다. 캐싱은 하드웨어, OS, 웹 브라우저, 웹 어플리케이션 등 거의 대부분의 컴퓨팅 계층에서 사용된다. 
 
-### Application server cache
+#### Application server cache
 
 요청에 대한 응답을 처리할 때, 서버는 로컬에 캐시된 데이터가 만약에 존재한다면 반환하고 만약 없다면 쿼리를 통해 디스크로부터 데이터를 받아온다. 캐시는 메모리(매우 빠름) 또는 로컬 디스크(네트워크 스토리지 보다는 빠름)에 위치할 수 있다.
 
 노드의 개수를 늘린다면 각 노드별로 그들의 캐시를 갖게된다. 그러면 만약 LB가 무작위의 노드에게 요청을 분배한다면 캐시 적중률은 떨어질 것이다. 이런 문제를 해결하기 위해 글로벌 캐시와 분산 캐시 두가지 방법이 있다.
 
-### Content Distributed Network (CDN)
+#### Content Distributed Network (CDN)
 
 CDN은 대용량의 static media를 제공하는 사이트에 적용되는 일종의 캐시이다. 전형적인 CDN은 static media의 일부가 요청으로 들어오면 locally available할 때 콘텐츠를 제공한다. 만약 locally available하지 않으면 CDN은 즉시 백엔드 서버로 파일을 요청하고 이를 로컬에 캐시한 후 유저에게 콘텐츠를 제공한다.
 
 만약 구축 중인 시스템이 자체 CDN을 보유할 만큼 그리 크지 않은 경우 NginX와 같은 경량 HTTP 서버를 사용하여 별도의 하위 도메인에서 static media를 제공함으로써 향후 전환을 쉽게 할 수 있다. 추후에 CDN으로 DNS를 cut-over(한순간에 기존 시스템을 새로운 시스템으로 전환) 하면 된다.
 
-### Cache Invalidation
+#### Cache Invalidation
 
 캐시하는 것은 좋지만 source of truth에 대한 캐시 일관성을 유지하는 것이 필요하다. 데이터베이스의 데이터가 변경된다면 그 데이터의 캐시는 만료되어야한다. 그렇지 않으면 application 작동에 정합성 문제가 발생할 것이다.
 
@@ -283,7 +287,7 @@ CDN은 대용량의 static media를 제공하는 사이트에 적용되는 일�
     - 데이터를 먼저 캐시하고 이후 시간이 지나면 영구적으로 저장
     - 지연 시간은 짧지만 데이터 유실 가능성이 있음
 
-### Cache eviction policies
+#### Cache eviction policies
 
 First In First Out (FIFO)
 
@@ -309,11 +313,11 @@ Random Replacement (RR)
 
 - 무작위로 캐시를 해제
 
-## Sharding or Partitioning
+### Sharding or Partitioning
 
 데이터 파티셔닝은 대용량의 데이터를 여러 부분으로 나누는 기술이다. 데이터를 나누는 이유로는, 어떤 시점부터는 서버를 verical 하게 증가시키기 보다 더 많은 머신을 추가하여 horizontal 하게 스케일하는 것이 값싸고 적절하다.
 
-### Partitioning Methods
+#### Partitioning Methods
 
 Horizontal Partitioning
 
@@ -331,7 +335,7 @@ Directory Based Partitioning
 - 특정 데이터 엔티티가 어디에 있는지 알기 위해 각 tuple key와 DB 서버 간의 매핑을 보유한 디렉토리 서버를 쿼리
 - 이러한 느슨한 결합 방식은 어플리케이션에 영향을 주지 않고 DB 풀에 서버를 추가하거나 파티셔닝 방식을 변경하는 등의 작업 수행 가능
 
-### Partitioning Criteria
+#### Partitioning Criteria
 
 Key or Hash-based Partitioning
 
@@ -353,7 +357,7 @@ Composite Partitioning
 
 - list partitioning을 적용한 후, hash 기반의 partitioning 수행
 
-### Common Problems of Sharding
+#### Common Problems of Sharding
 
 Shard된 데이터베이스는 테이블이나 row에 대한 연산이 더 이상 하나의 서버에서 작동하지 않기 때문에 여러 제약사항이 발생
 
@@ -384,7 +388,7 @@ Rebalancing
     - 어플리케이션에 영향 없이 DB 서버를 추가하거나 파티셔닝 전략을 변경 가능
     - 하지만 새로운 단일 장애 지점이 됨
 
-## Indexes
+### Indexes
 
 인덱스는 데이터베이스로부터 온 개념으로 알려져 있음
 
@@ -396,11 +400,11 @@ Rebalancing
 
 인덱스는 테이블에서 하나 또는 여러 컬럼을 이용해 생성 가능하며, ordered record에 효율적으로 접근하고 빠른 random lookup을 제공
 
-### Example: A Library Catalog
+#### Example: A Library Catalog
 
 - 대충 도서관에서 책 빨리 찾는 방법 설명
 
-### How do Indexes decrease write performance?
+#### How do Indexes decrease write performance?
 
 - 인덱스가 데이터를 찾는데 걸리는 시간을 어마어마하게 줄여주지만, 데이터를 추가하고 수정하는 시간이 오래 걸려 그 자체로 크기가 클 수 있음
 - row를 추가하거나 수정하는데는 데이터 쓰기 뿐만 아니라 인덱스를 업데이트하는 작업도 필요
@@ -408,9 +412,9 @@ Rebalancing
 - 이런 이유로 필요없는 인덱스를 생성하는 것을 지양하고 사용하지 않는 인덱스는 제거해야 함
 - 읽기보다 쓰기가 더 많이 이루어지는 경우에는 성능이 저하되지만, 읽기 성능을 높이는 것이 보통 가치있음
 
-## Proxies
+### Proxies
 
-## Redundancy and Replication
+### Redundancy and Replication
 
 Redundancy
 
@@ -420,15 +424,16 @@ Replication
 
 - Redundancy를 위해 데이터를 복제
 
-## SQL vs. NoSQL
+### SQL vs. NoSQL
 
-## CAP Theorem
+### CAP Theorem
 
 Consistency, Availability, Partition tolerance를 모두 만족시키는 시스템은 존재하지 않는다
 
-## Consistent Hashing
+### Consistent Hashing
 
 Hash modulo를 통한 인덱스 생성은 수평적 확장이 어려움
 
-## Long Polling vs. WebSocket vs. Server Sent Events
+### Long Polling vs. WebSocket vs. Server Sent Events
+
 
