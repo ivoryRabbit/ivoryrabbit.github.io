@@ -2,6 +2,7 @@
 title:        System Design Interview (1)
 date:         2024-04-21
 categories:   [Data, Engineering]
+math:         true
 comments:     true
 ---
 
@@ -142,85 +143,95 @@ Twitter의 경우 모든 읽기/쓰기 요청을 처리하기 위하여 여러 �
 
 - 사용 가능한 아키텍처 요소에는 어떤 것들이 있는지
 - 아키텍처 요소들 간에 어떤 방식으로 작동하는지
-- 아키텍처 요소들을 어떻게 잘 활용할 수 있는지, trade-off 고민
+- 아키텍처 요소들을 어떻게 잘 활용할 수 있는지, trade-off는 무엇인지?
 
-필요하지 않은데도 확장성에 투자하는 것은 비지니스 적으로 옳지 못함
+필요하지 않은데도 확장성에 투자하는 것은 비지니스 적으로 옳지 못하다. 하지만 사전에 설계에 대한 고민을 충분히 한다면 미래에 귀중한 시간과 자원을 절약할 수 있다.
 
-하지만 미래에 시간과 리소스를 아끼기 위해서는 선제적으로 고민하는 것이 좋음
-
-확장 가능한 시스템을 설계하기 위한 주요 개념들을 소개
-
-특히 분산 시스템을 이해하는데 도움이 될 것
+이번 챕터에서는 확장 가능한 시스템을 설계하기 위한 주요 개념들을 알아보고 이를 통해 분산 시스템을 조금 더 이해할 수 있도록 한다.
 
 ### Key Characteristics of Distributed Systems
+
+분산 시스템의 주요한 특징으로는 확장성(Scalabilty), 신뢰성(Reliablity), 가용성(Availability), 효율성(Efficiency) 그리고 관리 용이성(Manageability)이 있다.
 
 #### Scalability
 
 - 시스템, 프로세스, 네트워크를 키우고 수요의 증가를 관리할 수 있는가
 - 많은 분산 시스템은 늘어나는 작업량을 감당하기 위해 Scalable(확장성)을 고려하여 발전함
 - 확장성 있는 시스템은 데이터의 용량이 커지고 작업량이 늘어나도 성능의 손실이 없어야 함
-- 물론 일반적으로 시스템이 확장성 있게 설계되어도 관리나 환경 비용으로 인해 시스템이 작아 질 수는 있음
+- 물론 일반적으로 시스템이 확장성 있게 설계되어도 관리나 환경 비용으로 인해 시스템이 작을 수 있음
 - 또한 어떤 작업은 시스템의 결함이나 불가항력에 의해 어쩔 수 없이 분산 처리가 불가능할 수 있음
 - 또한 분산처리를 하더라도 성능에 한계가 있을 수 있음
 - 확장성 있는 아키텍처는 이러한 상황을 미연에 방지하고 모든 노드가 참여하여 작업하도록 벨런싱
 
-Horizontal vs. Vertical Scaling
+##### Horizontal vs. Vertical Scaling
 
 - Horizontal Scaling
-    - 기존의 pool에 새로운 머신을 추가하여 확장하는 것 (scale out / in)
+    - 기존의 pool에 새로운 장치를 추가하여 확장하는 것 (scale out / in)
     - ex) Cassandra, MongoDB
 - Vertical Scaling
-    - 작은 머신을 더 큰 머신으로 교체하여 확장하는 것 (scale up / down)
-    - 다운타임이 발생할 수 있음
+    - 작은 장치을 더 큰 장치로 교체하여 확장하는 것 (scale up / down)
+    - 다운타임이 발생할 수 있고, 장치의 규모에 한계가 있음
     - ex) MySQL
 
 #### Reliability
 
-주어진 기간 내에 시스템이 다운될 확률
-
-replica의 개수를 늘리면 하나라도 살아있을 확률이 높아진다.
-
-단일 장애 지점을 극복할 수 있는 방법
+- 정의: 주어진 기간 내에 시스템이 다운될 확률
+- Redundancy: Replica의 개수를 늘림으로써 하나라도 살아있을 확률을 높임
+- 단일 장애 지점을 극복할 수 있는 방법
 
 #### Availability
 
-주어진 기간 동안 얼마나 요구되는 기능을 길게 수행할 수 있을지에 대한 비율
-
-긴 시간 동안 유지되고 짧은 시간 내에 복구될 수록 available하다.
-
-reliable하면 available하지만, available하다고 해서 반드시 reliable하지는 않다.
-
-- 만약 시스템이 자주 다운되지만 빠르게 복구되는 경우
+- 정의: 주어진 기간 동안 요구되는 역할을 얼마나 오랫동안 수행할 수 있을지에 대한 비율
+- 긴 시간 동안 유지되고, 짧은 시간 내에 복구될 수록 available하다.
+- reliable하면 available하지만, available하다고 해서 반드시 reliable하지는 않다.
+    - 시스템이 자주 다운되지만 빠르게 복구되는 경우
 
 #### Efficiency
 
-latency (response time)
+##### latency (response time)
 
 - 하나의 요청에 대해 얼마나 빠르게 응답할 수 있는지
 - non-blocking
 
-throughput (bandwidth)
+##### throughput (bandwidth)
 
 - 초당 얼마나 많은 요청을 처리할 수 있는지
 - asynchronous
 
 #### Serviceability or Manageability
 
-시스템의 복구 시간이 얼마나 짧은지
+- 분산 시스템 설계 시 운영 및 유지 관리가 쉬운지도 고려해야 함
+- 시스템의 복구 시간이 길면 availability가 감소
+- 문제 발생 시
+    - 감지가 빠르고
+    - 진단 및 문제의 원인 파악이 쉬우며
+    - 결함을 수정하기가 용이한지가 중요
 
-문제 발생 시 진단이 빠르고, 파악이 쉬우며 수정이 쉬운지
+### Redundancy and Replication
+
+#### Redundancy
+
+- 신뢰성 및 성능을 향상 시키려는 목적으로 시스템의 중요한 구성 요소 또는 기능을 복제하는 것
+- 서버의 복제 뿐만 아니라 파일 또는 데이터의 복제도 의미함
+- 시스템에서 단일 장애 지점을 제거하는데 핵심적인 역할을 하며 필요시 백업 또한 제공
+
+#### Replication
+
+- 정보를 공유하여 중복 리소스 간의 일관성을 보장하는 것을 의미
+- reliability, fault-tolerance, accessibility 등을 향상시킴
+- 일반적으로 원본과 복제본 간의 Master-Slave 관계를 띔
+    - Master는 업데이트를 받은 후 이를 각 Slave로 전달
+    - 각 Slave는 업데이트를 성공적으로 반영했다는 메시지를 Master에게 전달
 
 ### Load Balancing
 
-어플리케이션, 웹사이트, 데이터베이스에서 응답 성능을 높이기 위해 클러스터 단위의 서버로의 트래픽을 나누어 주는 분산 시스템
+Load Balancer(LB)는 어플리케이션, 웹사이트, 데이터베이스에서 응답 성능을 높이기 위해 클러스터 단위의 서버로의 트래픽을 나누어 주는 분산 시스템이다.
 
-- 서버의 replica 생성을 필요로 하기 때문에 available
-- 트래픽이 각 서버로 분산되기 때문에 responsiveness
-- 어플리케이션 서버가 단일 장애 지점이 되는 것을 막기 때문에 redundancy
+- Scailability: 트래픽이 늘어나면 애플리케이션의 replica를 생성하여 대응 가능
+- Reliability: 애플리케이션 서버가 단일 장애 지점(Single Point of Failure)이 되는 것을 방지
+- Efficiency: 트래픽이 각 서버로 분산되므로 서버의 반응성(Responsiveness)이 향상
 
-![스크린샷 2023-09-17 오후 4.14.47.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4d99b82-e7a7-4181-8500-0b914690785b/4a0c99e2-c889-458e-b131-8729499a824f/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA_2023-09-17_%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE_4.14.47.png)
-
-장점
+#### Benefits
 
 - 유저는 빠르고 중단되지 않는 서비스를 경험할 수 있다.
 - 서비스 공급자 입장에서 더 적은 downtime과 높은 throughput을 경험할 수 있다.
@@ -229,34 +240,30 @@ throughput (bandwidth)
 
 #### LB Algorithm
 
-- health check
+- Health Check
     - 기본적으로 서버의 건강을 주기적으로 체크하고, 만약 건강하지 않은 경우(unhealthy) pool에서 제거하여 트래픽을 보내지 않음
 - Least Connection Method
-    - 활성화 된 커넥션의 개수가 가장 적은 노드로 트래픽을 전달
+    - 활성화 된 커넥션의 개수가 가장 적은 노드로 트래픽을 할당
 - Least Response Time Method
-    - 평균 응답 시간이 가장 짧은 노드로 트래픽을 전달
+    - 평균 응답 시간이 가장 짧은 노드로 트래픽을 할당
 - Least Bandwidth Method
-    - 초당 대역폭이 가장 적은 노드로 트래픽을 전달
+    - 초당 대역폭이 가장 적은 노드로 트래픽을 할당
 - Round Robin Method
-    - 노드 리스트를 순회하며 차례대로 트래픽을 전달
+    - 노드 리스트를 순회하며 차례대로 트래픽을 할당
 - Weighted Round Robin Method
-    - weight가 높은 노드 순대로 더 많은 트래픽을 전달
+    - Capacity가 큰 노드에 weight를 주어 더 많은 트래픽을 할당
 - IP Hash
-    - IP 주소를 hash + modulo ( % node 개수 )하여 트래픽을 전달
+    - IP 주소를 hash + modulo ( % node 개수 )하여 트래픽을 할당
 
 #### Redundant LB
 
-로드 밸런서는 그 자체로 단일 장애 지점이 될 수 있다.
-
-두번째 로드 밸런서를 준비하여 첫번째 로드 밸런서와 서로 healthy를 주고 받는다.
-
-메인 로드 밸런서가 죽으면 두번째 로드 밸런서가 작업을 인계한다.
-
-![스크린샷 2023-09-25 오후 1.39.36.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4d99b82-e7a7-4181-8500-0b914690785b/ad5eb821-7cbc-4b8f-8e09-5e6502fce201/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA_2023-09-25_%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE_1.39.36.png)
+- 로드 밸런서는 그 자체로 단일 장애 지점이 될 수 있다.
+- 두번째 로드 밸런서를 준비하여 첫번째 로드 밸런서와 서로 healthy를 주고 받는다.
+- 메인 로드 밸런서가 죽으면 두번째 로드 밸런서가 작업을 인계한다.
 
 ### Caching
 
-LB가 수평적 확장을 통해 도움을 준다면, 캐싱은 이미 만들어진 리소스를 잘 사용할 수 있도록 한다. 캐싱은 하드웨어, OS, 웹 브라우저, 웹 어플리케이션 등 거의 대부분의 컴퓨팅 계층에서 사용된다. 
+LB가 수평적 확장을 통해 도움을 준다면, 캐싱은 이미 만들어진 리소스를 잘 사용할 수 있도록 한다. 캐싱은 하드웨어, OS, 웹 브라우저, 웹 어플리케이션 등 거의 대부분의 컴퓨팅 계층에서 사용된다.
 
 #### Application server cache
 
@@ -276,129 +283,101 @@ CDN은 대용량의 static media를 제공하는 사이트에 적용되는 일�
 
 이러한 문제를 해결하기 위해 3가지 방법이 존재한다.
 
-- Write-through cache
+- Write-through Cache
     - 데이터를 데이터베이스에 저장하면서 캐시에도 저장
     - 데이터 유실에 신경써야함
     - 쓰기 요청 하나 당 두번씩 작업을 해야하기 때문에 높은 지연 시간이 단점
-- Write-around cache
+- Write-around Cache
     - 데이터를 캐시를 하고 데이터베이스에 저장
     - 마찬가지로 높은 지연 시간이 단점
-- Write-back cache
+- Write-back Cache
     - 데이터를 먼저 캐시하고 이후 시간이 지나면 영구적으로 저장
     - 지연 시간은 짧지만 데이터 유실 가능성이 있음
 
 #### Cache eviction policies
 
-First In First Out (FIFO)
-
-- 얼마나 자주 또는 얼마나 많이 접근했던지 간에 가장 먼저 등록된 block을 해제
-
-Last In First Out (LIFO)
-
-- 가장 최근에 등록된 block을 해제
-
-Least Recently Used (LRU)
-
-- 가장 오래전 사용된 캐시를 해제
-
-Most Recently Used (MRU)
-
-- 가장 최근에 사용된 캐시를 해제
-
-Least Frequently Used (LFU)
-
-- 가장 덜 사용된 캐시를 해제
-
-Random Replacement (RR)
-
-- 무작위로 캐시를 해제
+- First In First Out (FIFO)
+    - 얼마나 자주 또는 얼마나 많이 접근했던지 간에 가장 먼저 등록된 block을 해제
+- Last In First Out (LIFO)
+    - 가장 최근에 등록된 block을 해제
+- Least Recently Used (LRU)
+    - 가장 오래전 사용된 캐시를 해제
+- Most Recently Used (MRU)
+    - 가장 최근에 사용된 캐시를 해제
+- Least Frequently Used (LFU)
+    - 가장 덜 사용된 캐시를 해제
+- Random Replacement (RR)
+    - 무작위로 캐시를 해제
 
 ### Sharding or Partitioning
 
-데이터 파티셔닝은 대용량의 데이터를 여러 부분으로 나누는 기술이다. 데이터를 나누는 이유로는, 어떤 시점부터는 서버를 verical 하게 증가시키기 보다 더 많은 머신을 추가하여 horizontal 하게 스케일하는 것이 값싸고 적절하다.
+데이터 파티셔닝은 대용량의 데이터를 여러 부분으로 나누는 기술이다. 데이터를 나누는 이유로는, 어떤 시점부터는 서버를 수직적으로 증가시키기 보다 더 많은 장치를 추가하여 수평적으로 스케일링하는 것이 값싸고 적절하기 때문이다.
 
 #### Partitioning Methods
 
-Horizontal Partitioning
-
-- row를 다른 테이블에 적재
-
-Vertical Partitioning
-
-- 테이블을 다른 서버에 적재
-- 구현이 간단하며 어플리케이션에 미치는 영향이 적다
-- 서비스가 커지면 기능 별 DB를 여러 서버에 걸쳐 분할해야하는 문제가 생긴다
-
-Directory Based Partitioning
-
-- 위 두 방식의 단점을 보완하기 위한 느슨한 결합 방식은, 현재 분할 방식을 알고 있는 lookup 서비스를 생성하고 DB access code로 부터 추상화하는 것
-- 특정 데이터 엔티티가 어디에 있는지 알기 위해 각 tuple key와 DB 서버 간의 매핑을 보유한 디렉토리 서버를 쿼리
-- 이러한 느슨한 결합 방식은 어플리케이션에 영향을 주지 않고 DB 풀에 서버를 추가하거나 파티셔닝 방식을 변경하는 등의 작업 수행 가능
+- Horizontal Partitioning
+    - row를 다른 테이블에 적재
+- Vertical Partitioning
+    - 테이블을 다른 서버에 적재
+    - 구현이 간단하며 어플리케이션에 미치는 영향이 적다
+    - 서비스가 커지면 기능 별 DB를 여러 서버에 걸쳐 분할해야하는 문제가 생긴다
+- Directory Based Partitioning
+    - 위 두 방식의 단점을 보완하기 위한 느슨한 결합 방식은, 현재 분할 방식을 알고 있는 lookup 서비스를 생성하고 DB access code로 부터 추상화하는 것
+    - 특정 데이터 엔티티가 어디에 있는지 알기 위해 각 tuple key와 DB 서버 간의 매핑을 보유한 디렉토리 서버를 쿼리
+    - 이러한 느슨한 결합 방식은 어플리케이션에 영향을 주지 않고 DB 풀에 서버를 추가하거나 파티셔닝 방식을 변경하는 등의 작업 수행 가능
 
 #### Partitioning Criteria
 
-Key or Hash-based Partitioning
-
-- 엔티티의 key에 hash function을 적용한 후 modulo
-- hash 함수는 uniform allocation을 보장
-- 새로운 서버가 추가되면 데이터의 재분배가 필요하고 이로인해 downtime 발생
-- 따라서 consistent hashing을 사용하기도 함
-
-List Partitioning
-
-- 새로운 record를 추가하고 싶을 때, 이미 만들어 놓은 파티션 리스트에서 선택
-- 예시로 유저가 사는 위치에 따라 파티셔닝
-
-Round-robin Partitioning
-
-- i 번째 튜플을 n 파티션에 할당 (i mod n)
-
-Composite Partitioning
-
-- list partitioning을 적용한 후, hash 기반의 partitioning 수행
+- Key or Hash-based Partitioning
+    - 엔티티의 key에 hash function을 적용한 후 modulo
+    - hash 함수는 uniform allocation을 보장
+    - 새로운 서버가 추가되면 데이터의 재분배가 필요하고 이로인해 downtime 발생
+    - 따라서 consistent hashing을 사용하기도 함
+- List Partitioning
+    - 새로운 record를 추가하고 싶을 때, 이미 만들어 놓은 파티션 리스트에서 선택
+    - 예시로 유저가 사는 위치에 따라 파티셔닝
+- Round-robin Partitioning
+    - i 번째 튜플을 n 파티션에 할당 (i mod n)
+- Composite Partitioning
+    - list partitioning을 적용한 후, hash 기반의 partitioning 수행
 
 #### Common Problems of Sharding
 
-Shard된 데이터베이스는 테이블이나 row에 대한 연산이 더 이상 하나의 서버에서 작동하지 않기 때문에 여러 제약사항이 발생
+Sharding된 데이터베이스는 테이블이나 row에 대한 연산을 더 이상 하나의 서버로만 처리할 수 없기 때문에 여러 제약사항이 발생하게 된다.
 
-Joins and Denormalization
+- Joins and Denormalization
+    - 하나의 서버에서 join 연산을 수행하는 것은 간단하지만, 데이터베이스가 파티션되어 있고 여러 머신에 나누어져 있다면 join을 여러 데이터베이스 샤드들에 걸쳐 수행하는 것이 적절하지 못함
+    - 이러한 join은 특히 데이터가 여러 서버에서 컴파일되기 때문에 비효율적임
+    - 이 문제의 해결방법은 join을 필요로하는 쿼리가 미리 수행되도록 데이터베이스를 denormalization하는 것
+    - 서비스는 데이터 정합성 등 denormalization으로 인한 위험을 감당해야 함
 
-- 하나의 서버에서 join 연산을 수행하는 것은 간단하지만, 데이터베이스가 파티션되어 있고 여러 머신에 나누어져 있다면 join을 여러 데이터베이스 샤드들에 걸쳐 수행하는 것이 적절하지 못함
-- 이러한 join은 특히 데이터가 여러 서버에서 컴파일되기 때문에 비효율적임
-- 이 문제의 해결방법은 join을 필요로하는 쿼리가 미리 수행되도록 데이터베이스를 denormalization하는 것
-- 서비스는 데이터 정합성 등 denormalization으로 인한 위험을 감당해야 함
+- Referential Integrity
+    - partition된 데이터베이스에서 샤드 간 쿼리를 수행하는 것이 적합하지 않듯이, shard된 데이터베이스에서 foreign key와 같이 데이터 무결성 제약조건을 지키는 것은 굉장히 어려움
+    - 대부분의 RDBMS는 서로 다른 서버에서 데이터베이스 간의 foreign key 제약을 지원하지 않음
+    - 따라서 application 코드 레벨에서 참조 무결성을 지키도록 해야함
+    - 이런 경우에는 어플리케이션이 허상(dangling) 참조를 지울 수 있도록 sql 작업을 실행해야 함
 
-Referential Integrity
-
-- partition된 데이터베이스에서 샤드 간 쿼리를 수행하는 것이 적합하지 않듯이, shard된 데이터베이스에서 foreign key와 같이 데이터 무결성 제약조건을 지키는 것은 굉장히 어려움
-- 대부분의 RDBMS는 서로 다른 서버에서 데이터베이스 간의 foreign key 제약을 지원하지 않음
-- 따라서 application 코드 레벨에서 참조 무결성을 지키도록 해야함
-- 이런 경우에는 어플리케이션이 허상(dangling) 참조를 지울 수 있도록 sql 작업을 실행해야 함
-
-Rebalancing
-
-- 기존의 sharding 전략을 변경해야할 경우가 있음
-    1. 데이터 분포가 uniform 하지 않은 경우
-    2. 하나의 shard에 부하가 몰리는 경우
-- 위와 같은 경우에는 DB의 shard를 늘리거나 기존에 사용하던 shard들을 리벨런싱해야 함
-- 이는 기존의 파티셔닝 전략이 수정되어 모든 데이터가 새로운 곳으로 이동해야함을 의미
-- downtime 없이 이를 수행하는 것은 매우 어려움
-- directory-based partitioning 전략을 사용하는 것은 시스템의 복잡성을 증가시키고 새로운 단일장애지점을 생성하는 등 리벨런싱을 하는데 매우 즐거운 경험을 선사함^^
-    - lookup service는 파티셔닝 전략을 인지하고 데이터베이스 접근 코드를 추상화
-    - 어플리케이션에 영향 없이 DB 서버를 추가하거나 파티셔닝 전략을 변경 가능
-    - 하지만 새로운 단일 장애 지점이 됨
+- Rebalancing
+    - 기존의 sharding 전략을 변경해야할 경우가 있음
+        1. 데이터 분포가 uniform 하지 않은 경우
+        2. 하나의 shard에 부하가 몰리는 경우
+    - 위와 같은 경우에는 DB의 shard를 늘리거나 기존에 사용하던 shard들을 리벨런싱해야 함
+    - 이는 기존의 파티셔닝 전략이 수정되어 모든 데이터가 새로운 곳으로 이동해야함을 의미
+    - downtime 없이 이를 수행하는 것은 매우 어려움
+    - directory-based partitioning 전략을 사용하는 것은 시스템의 복잡성을 증가시키고 새로운 단일장애지점을 생성하는 등 리벨런싱을 하는데 매우 즐거운 경험을 선사함^^
+        - lookup service는 파티셔닝 전략을 인지하고 데이터베이스 접근 코드를 추상화
+        - 어플리케이션에 영향 없이 DB 서버를 추가하거나 파티셔닝 전략을 변경 가능
+        - 하지만 새로운 단일 장애 지점이 됨
 
 ### Indexes
 
-인덱스는 데이터베이스로부터 온 개념으로 알려져 있음
+인덱스는 데이터베이스에서의 개념으로 잘 알려져 있다.
 
-빠르든 늦게든 데이터베이스 성능이 더 이상 안정적이지 않은 시간이 올 것
+빠르든 늦든 데이터베이스의 성능이 더 이상 안정적이지 못할 때가 오는데, 그때 가장 먼저 해볼 수 있는 대처로는 데이터베이스의 인덱스를 손보는 것이다.
 
-그럴 때가 오면 가장 먼저 해볼 수 있는 일은 데이터 베이스의 인덱스를 손보는 것임
+인덱스 생성의 목적은 데이터베이스의 특정 테이블을 빠르게 탐색하여 원하는 row들을 빠르게 찾아내는 것이다.
 
-인덱스 생성의 목적은 데이터 베이스의 특정 테이블을 탐색하는 것을 빠르게 만들고 우리가 원하는 row들을 빠르게 찾아내는 것
-
-인덱스는 테이블에서 하나 또는 여러 컬럼을 이용해 생성 가능하며, ordered record에 효율적으로 접근하고 빠른 random lookup을 제공
+인덱스는 테이블에서 하나 또는 여러 컬럼을 이용해 생성 가능하며, ordered record에 효율적으로 접근하고 빠른 random lookup을 제공한다.
 
 #### Example: A Library Catalog
 
@@ -414,26 +393,45 @@ Rebalancing
 
 ### Proxies
 
-### Redundancy and Replication
+프록시 서버는 클라이언트와 백엔드 서버 사이의 중간 서버이다. 클라이언트는 웹 페이지, 파일, 연결 등과 같은 서비스를 요청하기 위해 프록시 서버에 연결을 요청한다. 즉, 프록시 서버는 다른 서버에서 리소스를 찾는 클라이언트의 요청을 중개하는 소프트웨어 또는 하드웨어이다.
 
-Redundancy
+일반적으로 프록시는 요청을 필터링하고, 요청을 기록하거나 때로는 요청을 변환(헤더 추가/제거, 암호화/해독 또는 리소스 압축을 통해)하는 데 사용된다. 
 
-- 리소스를 복제해두어 하나가 다운되어도 전체가 다운되지 않도록
-
-Replication
-
-- Redundancy를 위해 데이터를 복제
+프록시 서버의 또 다른 장점은 캐시를 통해 많은 요청을 처리할 수 있다는 점이다. 여러 클라이언트가 특정 리소스에 접근하는 경우에는 프록시 서버가 이를 캐시하여 원격 서버로 이동하지 않고도 모든 클라이언트에 이를 제공할 수 있다.
 
 ### SQL vs. NoSQL
 
-### CAP Theorem
+NoSQL 데이터베이스가 속도와 확장성으로 인해 인기를 얻고 있음에도 불구하고, 여전히 SQL 데이터베이스가 더 나은 성능을 발휘할 수 있는 상황은 존재한다.
 
-Consistency, Availability, Partition tolerance를 모두 만족시키는 시스템은 존재하지 않는다
+따라서 사용 목적에 따라 올바른 데이터베이스를 선택하는 것이 중요하다. 필요하다면 관계형 데이터베이스와 비관계형 데이터베이스 모두 사용할 수 있어야 한다.
 
-### Consistent Hashing
+#### SQL 데이터베이스를 사용하는 이유
 
-Hash modulo를 통한 인덱스 생성은 수평적 확장이 어려움
+MySQL, PostgresQL 등
 
-### Long Polling vs. WebSocket vs. Server Sent Events
+##### 1. ACID를 보장
 
+ACID는 트랜잭션이 데이터베이스와 상호 작용하는 방식을 정확하게 규정하여 이상 현상을 방지하고 데이터베이스의 무결성을 보호한다.
+
+일반적으로 NoSQL 데이터베이스는 확장성과 처리 속도를 위해 ACID 준수를 희생하지만, 많은 전자 상거래 및 금융 애플리케이션에서는 ACID를 준수하는 SQL 데이터베이스가 여전히 선호되는 선택지이다.
+
+##### 2. 구조화된 데이터
+
+데이터가 구조화되어 있고 변경되지 않는 경우에는 SQL 데이터베이스를 사용하지 않을 이유가 없다. 
+
+#### NoSQL 데이터베이스를 사용하는 이유
+
+MongoDB, CouchDB, Cassandra, HBase 등
+
+##### 1. 제한되지 않는 데이터 유형
+
+최근 기업에서는 구조가 거의 또는 전혀 없는 대용량 데이터를 저장하는 경우가 많다. NoSQL 데이터베이스는 함께 저장할 수 있는 데이터 유형에 제한을 두지 않으며, 필요에 따라 새로운 유형을 추가할 수 있다. 문서 기반 데이터베이스를 사용하면 데이터의 "유형"을 미리 정의하지 않고도 데이터를 한 곳에 저장할 수 있다.
+
+##### 2. 클라우드 컴퓨팅과 스토리지의 활용
+
+클라우드 기반 스토리지를 이용하면 비용을 절감할 수 있지만, 데이터를 여러 서버에 분산시켜야 한다. 클라우드에서 상용 하드웨어를 사용하면 추가 소프트웨어 설치의 번거로움이 줄어들고, Cassandra와 같은 NoSQL 데이터베이스는 큰 어려움 없이 즉시 여러 데이터 센터에 걸쳐 확장 가능하도록 설계되어 있다.
+
+##### 3. 신속한 개발
+
+NoSQL은 미리 준비할게 없으므로 개발을 신속하게 진행할 수 있다. 버전 간에 downtime 없이 데이터 구조를 자주 업데이트하는 등의 빠르고 반복적인 시스템 작업의 경우, 관계형 데이터베이스를 사용하면 속도가 느려진다.
 
