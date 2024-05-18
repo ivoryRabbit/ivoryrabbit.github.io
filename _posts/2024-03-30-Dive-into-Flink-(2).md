@@ -135,7 +135,7 @@ Flink Job Manager를 띄우는데 성공했다면 [localhost:8081](http://localh
 
 이제 Flink Application을 구현하고 제출해보자. PyFlink 대신 데이터 엔지니어에게 좀 더 익숙한(?) Scala를 사용하였는데 생각보다 레퍼런스가 부족해 애를 먹었다. ~~후 너넨 이런거 피지 마라~~
 
-`flink-connector-kafka` 의존성의 KafkaSource, KafkaSink를 이용하면 애플리케이션을 쉽게 구현할 수 있다. Consumer group 설정에 필요한 property들도 빌더 패턴을 통해 쉽게 주입할 수 있다.
+`flink-connector-kafka` 의존성의 KafkaSource, KafkaSink를 이용하면 애플리케이션을 쉽게 구현할 수 있다. Consumer group 설정에 필요한 property들도 빌더 패턴을 통해 주입할 수 있다.
 
 ```scala
 object Job {
@@ -173,14 +173,14 @@ object Job {
 }
 ```
 
-sbt를 이용해 컴파일한 후, API를 호출하여 jar 파일을 Job Manager로 업로드 해준다. Flink Dashboard의 `Submit New Job` >> `Add New` 버튼을 클릭하여 메뉴얼하게 업로드하는 것도 가능하다.
+Sbt를 이용해 컴파일한 후, API를 호출하여 jar 파일을 Job Manager로 업로드 해준다. Flink Dashboard의 `Submit New Job` >> `Add New` 버튼을 클릭하여 메뉴얼하게 업로드하는 것도 가능하다.
 
 ```bash
 sbt clean assembly
 curl -X POST http://localhost:8081/v1/jars/upload -H "Expect:" -F "jarfile=@./target/scala-2.12/flink-dev-assembly-0.1-SNAPSHOT.jar"
 ```
 
-jar 파일을 업로드하면 다음과 같이 Job을 제출할 수 있다. 실행시킬 Entrypoint를 기입하고 `Submit` 버튼을 누르면 Job이 실행된다. 마찬가지로 메뉴얼하게 실행하는 대신 REST API를 사용할 수도 있다.
+Jar 파일을 업로드하면 다음과 같이 Job을 제출할 수 있다. 실행시킬 entrypoint를 기입하고 `Submit` 버튼을 누르면 Job이 실행된다. 마찬가지로 메뉴얼하게 실행하는 대신 REST API를 사용할 수도 있다.
 - [Flink REST API](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/ops/rest_api/#jars-jarid-run){: target="_blank"}
 
 ![image_05](/assets/img/posts/2024-03-30/image_05.png){: width="600" height="400" }
