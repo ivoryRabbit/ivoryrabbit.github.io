@@ -1,5 +1,5 @@
 ---
-title:        [번역] How we built Text-to-SQL at Pinterest
+title:        How we built Text-to-SQL at Pinterest (번역)
 date:         2024-07-20
 categories:   [번역]
 comments:     true
@@ -9,7 +9,7 @@ comments:     true
 > - [How we built Text-to-SQL at Pinterest](https://medium.com/pinterest-engineering/how-we-built-text-to-sql-at-pinterest-30bad30dabff){: target="_blank"}
 {: .prompt-tip }
 
-분석 문제를 해결하기 위해 쿼리를 작성하는 것은 Pinterest의 데이터 사용자에겐 매우 중요한 과제입니다. 하지만 올바른 데이터를 찾거나 분석 문제를 정확하고 효율적인 SQL로 변환하는 것은 어려운 작업일 수 있습니다. 특히 빠르게 변화하는 환경에서 서로 다른 도메인에 흩어져 있는 상당한 양의 데이터를 처리해야 하는 경우에는 더더욱이요.
+분석 문제를 해결하기 위해 쿼리를 작성하는 것은 Pinterest의 데이터 사용자에겐 매우 중요한 작업입니다. 하지만 올바른 데이터를 찾거나 분석 문제를 정확하고 효율적인 SQL로 변환하는 것은 어려운 작업일 수 있습니다. 특히 빠르게 변화하는 환경에서 서로 다른 도메인에 흩어져 있는 상당한 양의 데이터를 처리해야 하는 경우에는 더더욱이요.
 
 우리는 이러한 분석 질문을 코드로 변환해주는 Text-to-SQL 기능을 개발함으로써, LLM(대형 언어 모델)의 가용성 향상이 데이터 사용자의 작업에 도움이 될지 알아 볼 기회를 가질 수 있었습니다.
 
@@ -25,7 +25,7 @@ Pinterest에서는 대부분의 데이터 분석이 사내 오픈소스 빅데�
 
 ![initial-version](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*wDKR6-ToiX5UgsUYN41JiQ.png){: width="400" height="200" }
 
-User는 사용할 테이블들을 선택하고 분석 질문을 던집니다.
+유저는 사용할 테이블들을 선택하고 분석 질문을 던집니다.
 
 1. 테이블 메타데이터 저장소에서 관련 테이블 스키마가 검색됩니다.
 2. 질문 및 선택한 SQL dialect, 그리고 테이블 스키마가 Text-to-SQL 프롬프트로 컴파일됩니다.
@@ -108,8 +108,6 @@ TEXT_TO_SQL_PROMPT = PromptTemplate.from_template(prompt_template)
 Text-to-SQL의 초기 성능 평가에서는, 구현이 대부분 기존의 접근 방식을 사용했다는 점을 고려하여 구현이 문헌에 보고된 결과와 비슷한 성능을 갖는지 확인하는 방식으로 수행되었습니다. 
 
 우리는 [Spider Dataset](https://arxiv.org/pdf/2204.00498){: target="_blank"}을 사용해 다른 곳에서 발표된 결과와 유사한 결과를 얻었습니다. 하지만 이 벤치마크 속 작업들은 유저가 실제로 직면하는 문제보다 훨씬 쉽습니다. 특히 잘 라벨링된 컬럼과 함께 사전에 지정된 소수의 테이블만을 고려한다는 점을 유의바랍니다.
-
-In order to determine how Text-to-SQL affected data user productivity, the most reliable method would have been to experiment. Using such a method, previous research has found that AI assistance improved task completion speed by over 50%. In our real world data (which importantly does not control for differences in tasks), we find a 35% improvement in task completion speed for writing SQL queries using AI assistance.
 
 Text-to-SQL 솔루션이 프로덕션에 배포된 후에는 사용자가 시스템과 상호 작용하는 방식도 관찰할 수 있었습니다. 구현이 개선되고 사용자가 이 기능에 더 익숙해짐에 따라, 생성된 SQL이 한번에 채택되는 비율이 20%에서 40% 이상으로 증가했습니다. 실제로는 생성된 대부분의 쿼리는 완성되기까지 인간 또는 AI에 의한 생성을 여러 번 반복해야 합니다. 
 
@@ -247,11 +245,15 @@ TABLE_SELECT_PROMPT = PromptTemplate.from_template(prompt_template)
 
 ### 평가 및 학습
 
-We evaluated the table retrieval component of our Text-to-SQL feature using offline data from previous table searches. This data was insufficient in one important respect: it captured user behavior before they knew that NLP-based search was available. Therefore, this data was used mostly to ensure that the embedding-based table search did not perform worse than the existing text-based search, rather than attempting to measure improvement. We used this evaluation to select a method and set weights for the embeddings used in table retrieval. This approach revealed to us that the table metadata generated through our data governance efforts was of significant importance to overall performance: the search hit rate without table documentation in the embeddings was 40%, but performance increased linearly with the weight placed on table documentation up to 90%.
+우리는 과거 테이블 검색으로부터 오프라인 데이터를 수집하여 Text-to-SQL 기능의 테이블 검색 구성 요소를 평가했습니다. 
 
-이전 테이블 검색의 오프라인 데이터를 사용하여 Text-to-SQL 기능의 테이블 검색 구성 요소를 평가했습니다. 이 데이터는 한 가지 중요한 측면에서 불충분했습니다: 즉, NLP 기반 검색이 가능하다는 사실을 알기 전에 사용자 행동을 포착했습니다. 따라서 본 데이터는 개선 정도를 측정하기보다는 임베딩 기반 테이블 검색이 기존 텍스트 기반 검색보다 성능이 떨어지지 않는지 확인하는 데 주로 사용되었습니다. 
+이 데이터는 한 가지 중요한 측면에서 불충분했습니다: NLP 기반 검색이 가능하다는 사실을 알기 전의 사용자 행동을 포착했습니다. 
 
-우리는 이 평가를 사용하여 테이블 검색에 사용되는 임베딩에 대한 방법을 선택하고 가중치를 설정했습니다. 이 접근 방식을 통해 데이터 거버넌스 노력을 통해 생성된 테이블 메타데이터가 전체 성능에 매우 중요하다는 사실이 밝혀졌습니다: 임베딩에 테이블 문서가 없는 경우 검색 적중률은 40%였지만 테이블 문서에 가중치를 부여하면 성능이 90% 까지 선형적으로 증가했습니다.
+따라서 이 데이터는 개선 정도를 측정하기보다는 임베딩 기반 테이블 검색이 기존 텍스트 기반 검색보다 성능이 떨어지지 않는지 확인하는 목적으로 사용되었습니다. 
+
+우리는 테이블 검색에 사용되는 방식을 선택하고 임베딩의 가중치를 설정하는데 이 평가를 사용했습니다.
+
+이 접근 방식을 통해 데이터 거버넌스 노력을 통해 생성된 테이블 메타데이터가 전체 성능에 매우 중요하다는 사실이 밝혀졌습니다: 임베딩에 테이블 문서가 없는 경우 검색 적중률은 40%였지만 테이블 문서에 가중치를 부여하면 성능이 90% 까지 선형적으로 증가했습니다.
 
 ## 향후 과제
 
@@ -279,14 +281,10 @@ Similarity Search 결과를 집계하는 현재 채점 전략은 다소 기초�
 
 테이블 검색 및 쿼리 생성 결과에 대한 사용자 피드백을 효율적으로 수집할 수 있는 사용자 인터페이스를 도입하면 개선을 위한 귀중한 통찰력을 얻을 수 있습니다. 이러한 피드백을 처리하여 벡터 인덱스나 테이블 메타데이터 저장소에 반영할 수 있다면 궁극적으로 시스템 성능을 향상시킬 수 있습니다.
 
-### Evaluation 평가
+### 평가
 
-While working on this project, we realized that the performance of text-to-SQL in a real world setting is significantly different to that in existing benchmarks, which tend to use a small number of well-normalized tables (which are also prespecified). 
+우리는 이 프로젝트를 진행하면서 실제 환경에서의 Text-to-SQL 성능이 기존 벤치마크의 성능과 크게 다르다는 것을 깨달았습니다.
 
-It would be helpful for applied researchers to produce more realistic benchmarks which include a larger amount of denormalized tables and treat table search as a core part of the problem.
-
-이 프로젝트를 진행하면서, 우리는 실제 환경에서의 Text-to-SQL 성능이 기존 벤치마크의 성능과 크게 다르다는 것을 깨달았습니다.
-
-문제의 초점을 테이블 검색으로 맞추고, 많은 양의 비정규화된 테이블로 구성된 현실적인 벤치마크를 생성하는 것이 훨씬 더 도움될 것 입니다.
+문제의 초점을 테이블 검색으로 맞추고, 데이터셋을 많은 양의 비정규화된 테이블로 구성하여 보다 현실적인 벤치마크를 생성하는 것이 훨씬 도움될 것 입니다.
 
 Pinterest의 엔지니어링에 대한 자세한 정보는 엔지니어링 블로그 및 Pinterest Labs 사이트를 방문하여 확인 가능합니다. 또 현재 채용 중인 직무는 채용 페이지를 방문해 살펴보실 수 있습니다.
