@@ -1,5 +1,5 @@
 ---
-title:        Twitter's Recommendation Algorithm (번역)
+title:        [번역] Twitter's Recommendation Algorithm
 date:         2023-08-10
 categories:   [번역]
 comments:     true
