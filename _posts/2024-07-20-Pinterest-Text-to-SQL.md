@@ -15,20 +15,20 @@ comments:     true
 
 ## Pinterest에서 Text-to-SQL이 작동하는 방식
 
-Pinterest에서는 대부분의 데이터 분석이 사내 오픈소스 빅데이터 SQL 쿼리 도구인 [Querybook](https://www.querybook.org/){: target="_blank"}에서 이루어집니다. 이곳은 Text-to-SQL를 포함하여, 데이터 사용자를 지원하는 새로운 기능들을 개발하고 배포하기에 최상의 환경입니다.
+Pinterest에서는 대부분의 데이터 분석이 사내 오픈소스 빅데이터 SQL 쿼리 도구인 [Querybook](https://www.querybook.org/){: target="_blank"}에서 이루어집니다. 이곳은 Text-to-SQL를 포함하여 데이터 사용자를 지원하는 새로운 기능들을 개발하고 배포하기에 최상의 환경입니다.
 
 ## Text-to-SQL 구현
 
 ### 초기 버전 - LLM을 활용한 Text-to-SQL
 
-첫 번째 버전은 LLM을 활용한 간단한 Text-to-SQL 솔루션입니다. 아키텍처를 자세히 살펴보겠습니다.
+첫 번째 버전은 LLM을 활용한, 간단한 Text-to-SQL 솔루션입니다. 아키텍처를 자세히 살펴보겠습니다.
 
 ![initial-version](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*wDKR6-ToiX5UgsUYN41JiQ.png){: width="400" height="200" }
 
 유저는 사용할 테이블들을 선택하고 분석 질문을 던집니다.
 
 1. 테이블 메타데이터 저장소에서 관련 테이블 스키마가 검색됩니다.
-2. 질문 및 선택한 SQL dialect, 그리고 테이블 스키마가 Text-to-SQL 프롬프트로 컴파일됩니다.
+2. 분석 질문 및 SQL dialect, 그리고 테이블 스키마가 Text-to-SQL 프롬프트로 컴파일됩니다.
 3. LLM에 프롬프트를 제출합니다.
 4. 스트리밍 응답이 생성되어 사용자에게 표시됩니다.
 
@@ -45,28 +45,29 @@ Pinterest에서는 대부분의 데이터 분석이 사내 오픈소스 빅데�
 
 #### Low-Cardinality 컬럼
 
-"웹 플랫폼에는 얼마나 많은 활성 사용자가 있습니까?" 처럼 모호한 분석 질문을 던진다면, 데이터베이스의 실제값과는 다른 SQL 쿼리 응답이 생성될 수 있습니다.
+"웹 플랫폼에는 얼마나 많은 활성 사용자가 있습니까?" 처럼 모호한 분석 질문을 던진다면 데이터베이스의 실제값과는 다른 SQL 쿼리 응답이 생성될 가능성이 있습니다.
 
-예를 들어, 올바른 `WHERE platform='WEB'` 대신 `WHERE platform='web'`이 응답의 where 절에 포함될 수 있습니다.
+예를 들어 올바른 `WHERE platform='WEB'` 대신 `WHERE platform='web'`이 응답의 where 절에 포함될 수 있습니다.
 
-이러한 문제를 해결하기 위해서는 필터링에 자주 사용되는 낮은 cardinality의 컬럼인 경우, LLM이 정확한 SQL 쿼리를 생성할 수 있도록 컬럼의 unique 값을 처리하여 테이블 스키마에 포함시켜 주어야 합니다.
+이러한 문제를 해결하기 위해서는 낮은 cardinality의 컬럼이 필터링에 사용되는 경우, LLM이 정확한 SQL 쿼리를 생성할 수 있도록 컬럼의 고유값들을 테이블 스키마에 포함시켜 주어야 합니다.
 
 #### Context Window 제한
 
 테이블 스키마가 너무 클때에는 context window 제한을 초과할 수도 있습니다. 이 문제를 해결하기 위해 우리는 몇 가지 기술들을 적용하였습니다.
 
 - 테이블 스키마 축소: 테이블 이름, 컬럼 이름 및 타입 등 중요한 요소들만 포함시킵니다.
-- 컬럼 가지치기: 메타데이터 저장소에서 각 컬럼에 태그가 달리며, 해당 태그를 기반으로 테이블 스키마에서 특정 컬럼을 제외합니다.
+- 컬럼 가지치기: 메타데이터 저장소에서 각 컬럼에 태그를 붙이고, 해당 태그를 기반으로 테이블 스키마에서 특정 컬럼을 제외합니다.
 
 ### Response Streaming
 
-LLM이 응답하는데는 수십 초가 걸릴 수 있으므로 사용자가 기다릴 필요가 없도록 WebSocket을 사용하여 응답을 스트리밍했습니다. 생성된 SQL 이외에도 다양한 정보를 반환해야 한다는 요구 사항이 있다면, 응답 형식을 적절하게 구조화하는 것이 중요합니다.
+LLM이 응답하는데는 수십 초가 걸릴 수 있으므로 사용자가 기다릴 필요가 없도록 WebSocket을 사용하여 응답을 스트리밍했습니다. 만약 생성된 SQL 이외에도 다양한 정보를 반환해야 하는 요구 사항이 있다면, 응답 형식을 적절하게 구조화하는 것이 중요합니다.
 
-Plain text는 스트리밍하기가 간단한 반면, JSON 스트리밍은 더 복잡할 수 있습니다. 우리는 서버 스트리밍을 위해 Langchain의 JSON parser를 채택하였으며, 이렇게 파싱된 JSON은 WebSocket을 통해 클라이언트로 다시 전송됩니다.
+Plain text는 스트리밍하기가 비교적 간단한 반면, JSON 스트리밍은 스트리밍하기가 까다로울 수 있습니다. 우리는 서버 스트리밍을 위해 Langchain의 JSON parser를 채택하였으며, 이렇게 파싱된 JSON은 WebSocket을 통해 클라이언트로 다시 전송됩니다.
 
 ### 프롬프트
 
-Text2SQL에 현재 사용하고 있는 프롬프트는 다음과 같습니다.
+Text2SQL에 현재 사용하고 있는 [프롬프트](https://github.com/pinterest/querybook/blob/master/querybook/server/lib/ai_assistant/prompts/text_to_sql_prompt.py){: target="_blank"}
+는 다음과 같습니다.
 
 ```python
 from langchain.prompts import PromptTemplate
@@ -105,25 +106,25 @@ TEXT_TO_SQL_PROMPT = PromptTemplate.from_template(prompt_template)
 
 #### 평가 및 학습
 
-Text-to-SQL의 초기 성능 평가에서는, 구현이 대부분 기존의 접근 방식을 사용했다는 점을 고려하여 구현이 문헌에 보고된 결과와 비슷한 성능을 갖는지 확인하는 방식으로 수행되었습니다. 
+Text-to-SQL의 초기 성능 평가에서는 구현의 대부분이 기존의 접근 방식을 차용했다는 점을 고려하여 구현이 문헌에 보고된 결과와 비슷한 성능을 갖는지 확인하는 방식으로 수행되었습니다.
 
-우리는 [Spider Dataset](https://arxiv.org/pdf/2204.00498){: target="_blank"}을 사용해 다른 곳에서 발표된 결과와 유사한 결과를 얻었습니다. 하지만 이 벤치마크 속 작업들은 유저가 실제로 직면하는 문제보다 훨씬 쉽습니다. 특히 잘 라벨링된 컬럼과 함께 사전에 지정된 소수의 테이블만을 고려한다는 점을 유의바랍니다.
+우리는 [Spider Dataset](https://arxiv.org/pdf/2204.00498){: target="_blank"}을 사용해 다른 곳에서 발표된 결과와 유사한 결과를 얻었습니다. 하지만 이 벤치마크 속 실험들은 유저가 실제로 풀어야할 문제보다 훨씬 쉽습니다. 특히 잘 라벨링된 컬럼과 함께 사전에 지정된 소수의 테이블만을 고려하고 있다는 점을 유의해야 합니다.
 
-Text-to-SQL 솔루션이 프로덕션에 배포된 후에는 사용자가 시스템과 상호 작용하는 방식도 관찰할 수 있었습니다. 구현이 개선되고 사용자가 이 기능에 더 익숙해짐에 따라, 생성된 SQL이 한번에 채택되는 비율이 20%에서 40% 이상으로 증가했습니다. 실제로는 생성된 대부분의 쿼리는 완성되기까지 인간 또는 AI에 의한 생성을 여러 번 반복해야 합니다. 
+Text-to-SQL 솔루션이 프로덕션에 배포된 후에는 사용자가 시스템과 상호 작용하는 방식도 관찰할 수 있었습니다. 구현이 개선되고 사용자가 이 기능에 더 익숙해짐에 따라, 생성된 SQL이 한번에 채택되는 비율이 20%에서 40% 이상으로 증가했습니다. 실제로는 생성된 쿼리의 대부분은 완성되기까지 인간 또는 AI에 의한 생성을 여러 번 반복해야 합니다. 
 
-Text-to-SQL이 데이터 사용자 생산성에 어떤 영향을 미치는지 확인하기 위한 가장 신뢰할 수 있는 방법은 실험이었습니다. 이전 연구에서는 이러한 방법을 사용하여 AI 지원이 작업 완료 속도를 50% 이상 향상시키는 것으로 나타났습니다. (과제 간 다름을 심각하게 제어하지 않은) 실제 데이터에서 AI 지원을 사용하여 SQL 쿼리를 작성할 때 작업 완료 속도가 35% 향상된 것으로 나타났습니다.
+Text-to-SQL이 데이터 사용자의 생산성에 얼마나 영향을 미치는지 확인할 수 있는 가장 신뢰가능한 방법은 실험이었습니다. [이전 연구](https://arxiv.org/pdf/2302.06590){: target="_blank"}에서는 AI assistance가 작업 속도를 50% 이상 향상시키는 것으로 나타났습니다. (과제 간 다름을 심각하게 제어하지 않은) 우리의 실제 데이터 기반 실험에서 AI assistance를 사용하여 SQL 쿼리를 작성할 때 작업 속도가 35% 향상된 것으로 나타났습니다.
 
-## 개선 버전 - 테이블 선택을 위한 RAG
+## 개선 버전 - RAG를 활용한 Table Selection
 
-첫 번째 버전은 사용자가 사용할 테이블을 알고 있다고 가정할 때 괜찮은 성능을 발휘했지만, 실제로 데이터 웨어하우스에 있는 수십만 개의 테이블 중에서 적절한 테이블을 구분해내는 것은 사용자에게 매우 어려운 일입니다.
+첫 번째 버전은 사용자가 자신이 사용할 테이블을 알고 있다고 가정할 때 괜찮은 성능을 발휘하지만, 실제로 데이터 웨어하우스에 있는 수십만 개의 테이블 중에서 적절한 테이블을 찾아내는 것은 사용자에게 매우 어려운 일입니다.
 
-이를 완화하기 위해 RAG(Retrieval Augmented Generation)를 통합하여 사용자가 작업에 필요한 테이블을 선택할 수 있도록 안내했습니다. RAG를 통합한 세련된 인프라에 대한 리뷰는 다음과 같습니다.
+이를 완화하기 위해 RAG(Retrieval Augmented Generation)를 통합하여 사용자가 작업에 필요한 테이블을 선택할 수 있도록 안내했습니다. RAG가 추가된 새로운 인프라 구조를 살펴보자면 다음과 같습니다.
 
 ![second-iteration](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*8lgsIGY1LVd1HqPAXNsddw.png){: width="400" height="200" }
 
-1. 테이블 요약 및 테이블에 대한 기록 쿼리의 벡터 인덱스를 생성하기 위해 오프라인 작업을 수행합니다.
-2. 사용자가 테이블을 지정하지 않으면 질문이 임베딩으로 변환되고 벡터 인덱스에 대해 유사성 검색을 수행하여 상위 N개의 적합한 테이블을 추론합니다.
-3. 테이블 스키마 및 분석 질문과 함께 상위 N 테이블은 LLM이 가장 관련성이 높은 상위 K 테이블을 선택하라는 프롬프트로 컴파일됩니다.
+1. 테이블 summary 및 테이블 사용 쿼리의 벡터 인덱스를 생성하기 위해 오프라인 작업을 수행합니다.
+2. 사용자가 테이블을 지정하지 않으면 질문이 임베딩으로 변환되고, 벡터 인덱스에 대해 Similarity Search를 수행하여 관련성이 높은 상위 N개의 테이블을 추론합니다.
+3. 상위 N 테이블은 테이블 스키마 및 분석 질문과 함께 가장 관련성이 높은 상위 K 테이블을 선택하라는 프롬프트로 컴파일되어 LLM에게 넘어갑니다.
 4. 검증 또는 변경을 위해 상위 K개 테이블이 사용자에게 반환됩니다.
 5. 사용자가 확인한 테이블을 사용하여 표준 Text-to-SQL 프로세스가 재개됩니다.
 
@@ -136,7 +137,7 @@ Text-to-SQL이 데이터 사용자 생산성에 어떤 영향을 미치는지 �
 
 #### Table Summarization
 
-Pinterest에서는 테이블에 계층을 추가하기 위한 테이블 표준화 노력이 진행 중입니다. 우리는 최상위 계층의 테이블만 인덱싱하여 이러한 고품질 데이터 세트의 사용을 장려합니다. 다음 과정을 통해 테이블 요약 생성 프로세스가 진행됩니다.
+Pinterest에서는 테이블에 `tier`를 붙이기 위한 테이블 표준화 작업이 진행 중 입니다. 우리는 최상위 tier의 테이블만 인덱싱하여 고품질 데이터 세트가 사용될 수 있도록 장려하고 있습니다. 다음 과정을 통해 테이블 요약 생성 프로세스가 진행됩니다.
 
 1. 테이블 메타데이터 저장소에서 테이블 스키마를 검색합니다.
 2. 테이블을 활용하여 가장 최근의 샘플 쿼리를 수집합니다.
@@ -144,7 +145,7 @@ Pinterest에서는 테이블에 계층을 추가하기 위한 테이블 표준�
 4. 요약을 생성하기 위해 프롬프트를 LLM에 전달합니다.
 5. 벡터 저장소에 임베딩을 생성하고 저장합니다.
 
-테이블 요약에는 테이블에 대한 설명, 포함된 데이터 및 잠재적인 사용 시나리오가 포함됩니다. 다음은 테이블 요약에 현재 사용하고 있는 프롬프트입니다.
+테이블 요약에는 테이블에 대한 설명, 포함된 데이터 및 잠재적인 사용 시나리오가 포함됩니다. 다음은 테이블 요약에 현재 사용하고 있는 [프롬프트](https://github.com/pinterest/querybook/blob/1f14756b2ff08b6b9decb4b1d9f5561ac82d2ea3/querybook/server/lib/ai_assistant/prompts/table_summary_prompt.py#L){: target="_blank"}입니다.
 
 ```python
 from langchain import PromptTemplate
@@ -174,7 +175,7 @@ TABLE_SUMMARY_PROMPT = PromptTemplate.from_template(prompt_template)
 
 #### Query Summarization
 
-테이블 요약의 역할 외에도, 각 테이블과 관련된 샘플 쿼리들이 쿼리 목적 및 활용 테이블과 같은 세부 정보를 포함하여 개별적으로 요약됩니다. 우리가 사용하는 프롬프트는 다음과 같습니다.
+Table summary 역할 외에도 각 테이블과 관련된 샘플 쿼리들 또한 요약됩니다. 여기에는 사용되는 테이블과 쿼리의 목적 등의 정보가 포함될 수 있습니다. 이때 사용하는 [프롬프트](https://github.com/pinterest/querybook/blob/1f14756b2ff08b6b9decb4b1d9f5561ac82d2ea3/querybook/server/lib/ai_assistant/prompts/sql_summary_prompt.py#L4){: target="_blank"}는 다음과 같습니다.
 
 ```python
 from langchain import PromptTemplate
@@ -215,7 +216,7 @@ SQL_SUMMARY_PROMPT = PromptTemplate.from_template(prompt_template)
 
 ### Table Re-selection
 
-벡터 인덱스로부터 상위 N개의 테이블을 검색하면, LLM을 사용하여 테이블 요약과 함께 질문을 평가하여 가장 관련성이 높은 K개의 테이블을 선택합니다. Context window에 따라 프롬프트에 가능한 한 많은 테이블을 추가합니다. 다음은 Table Re-selection에 사용하는 프롬프트입니다.
+벡터 인덱스로부터 상위 N개의 테이블을 검색한 후, LLM을 사용하여 테이블 요약과 함께 질문을 평가하여 가장 관련성이 높은 K개의 테이블을 재선택합니다. Context window에 따라 프롬프트에 가능한 한 많은 테이블을 추가합니다. 다음은 Table Re-selection에 사용하는 [프롬프트](https://github.com/pinterest/querybook/blob/1f14756b2ff08b6b9decb4b1d9f5561ac82d2ea3/querybook/server/lib/ai_assistant/prompts/table_select_prompt.py#L4){: target="_blank"}입니다.
 
 ```python
 from langchain import PromptTemplate
@@ -241,7 +242,7 @@ Please select the most relevant table(s) that can be used to generate SQL query 
 TABLE_SELECT_PROMPT = PromptTemplate.from_template(prompt_template)
 ```
 
-테이블이 다시 선택되고나면, 실제 SQL 생성 단계로 전환되기 전에 검증을 위해 사용자에게 반환됩니다.
+테이블이 재선택되고 나면, SQL 생성단계로 진입하기 전에 사용자에게 검증을 받기 위한 테이블 목록을 반환합니다.
 
 ### 평가 및 학습
 
@@ -249,7 +250,7 @@ TABLE_SELECT_PROMPT = PromptTemplate.from_template(prompt_template)
 
 이 데이터는 한 가지 중요한 측면에서 불충분했습니다: NLP 기반 검색이 가능하다는 사실을 알기 전의 사용자 행동을 포착했습니다. 
 
-따라서 이 데이터는 개선 정도를 측정하기보다는 임베딩 기반 테이블 검색이 기존 텍스트 기반 검색보다 성능이 떨어지지 않는지 확인하는 목적으로 사용되었습니다. 
+따라서 이 데이터는 개선 정도를 측정하기보다는 임베딩 기반 테이블 검색이 기존 텍스트 기반 검색보다 성능이 떨어지지 않는지 확인하는 목적으로 사용되었습니다.
 
 우리는 테이블 검색에 사용되는 방식을 선택하고 임베딩의 가중치를 설정하는데 이 평가를 사용했습니다.
 
@@ -263,7 +264,7 @@ TABLE_SELECT_PROMPT = PromptTemplate.from_template(prompt_template)
 
 - 메타데이터 개선
 
-현재 벡터 인덱스는 Table summary에만 적용되어 있습니다. 잠재적인 개선 사항 중 하나는 유사한 테이블을 검색하는 동안 더욱 정교한 필터링을 위해 계층화, 태그, 도메인 등과 같은 추가 메타데이터를 갖도록 하는 것입니다.
+현재 벡터 인덱스는 table summary에만 적용되어 있습니다만, 유사한 테이블을 검색할 때 티어, 태그, 도메인 등과 같은 메타데이터를 추가적으로 사용하여 더 정교하게 필터링 할 수 있도록 개선 가능합니다.
 
 - Scheduled or Real-Time Index Update
 
@@ -271,15 +272,15 @@ TABLE_SELECT_PROMPT = PromptTemplate.from_template(prompt_template)
 
 - Similarity Search and Scoring Strategy Revision
 
-Similarity Search 결과를 집계하는 현재 채점 전략은 다소 기초적입니다. 이 측면을 미세 조정하면 검색된 결과의 관련성을 향상시킬 수 있습니다.
+Similarity Search 결과를 집계하는 현재의 채점 전략은 다소 기초적입니다. 이 측면을 미세 조정하면 검색된 결과의 관련성을 향상시킬 수 있습니다.
 
 ### 쿼리 검증
 
-현재 LLM으로 생성된 SQL 쿼리는 유효성 검사 없이 사용자에게 직접 반환되므로, 쿼리가 예상과 달리 실행되지 않을 위험이 있습니다. Constrained Beam Search를 통해 쿼리 유효성 검사를 구현하면 추가 보증 계층을 제공할 수 있습니다.
+현재 LLM으로 생성된 SQL 쿼리는 유효성 검사 없이 사용자에게 직접 전달되므로, 예상과 다르게 쿼리가 실행되지 않을 위험이 있습니다. 따라서 Constrained Beam Search와 같은 방법을 통해 쿼리 유효성 검사를 할 수 있다면 품질 보증 계층을 제공할 수 있습니다.
 
 ### 유저 피드백
 
-테이블 검색 및 쿼리 생성 결과에 대한 사용자 피드백을 효율적으로 수집할 수 있는 사용자 인터페이스를 도입하면 개선을 위한 귀중한 통찰력을 얻을 수 있습니다. 이러한 피드백을 처리하여 벡터 인덱스나 테이블 메타데이터 저장소에 반영할 수 있다면 궁극적으로 시스템 성능을 향상시킬 수 있습니다.
+테이블 검색 및 쿼리 생성 결과에 대한 사용자의 피드백을 수집할 수 있는 인터페이스를 도입한다면, 개선을 위한 귀중한 통찰력을 얻을 수 있습니다. 이러한 피드백을 벡터 인덱스나 테이블 메타데이터 저장소에 반영할 수 있다면 궁극적으로 시스템 성능을 향상시킬 수 있습니다.
 
 ### 평가
 
