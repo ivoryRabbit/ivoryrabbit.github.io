@@ -12,13 +12,22 @@ H3 { color: #1e7ed2 }
 H4 { color: #C7A579 }
 </style>
 
+(WIP)
+
 ## Text-to-SQL이란?
 
-WIP
+자연어를 SQL 쿼리로 변환하는 기술
 
 ### 왜 필요할까?
 
+SQL에 대한 지식 없이도 빠르게 데이터를 조회할 수 있도록 도움
+
 ### 언제 유용할까?
+
+1. 빠르고 간단한 데이터 조회 업무
+2. SQL 교육
+3. Data discovery 대체
+
 
 ## Text-to-SQL 만들어보기
 
@@ -37,7 +46,7 @@ from typing import Dict
 from openai import OpenAI
 
 
-API_KEY = "Your API Token"
+API_KEY = "{{ Your API Token }}"
 MODEL = "gpt-3.5-turbo"
 
 temperature = 0.2
@@ -126,9 +135,9 @@ response = client.chat.completions.create(
     temperature=temperature,
 )
 
-results = response.choices[0].message.content
+sql = response.choices[0].message.content
 
-print(results)
+print(sql)
 ```
 
 result
@@ -148,8 +157,67 @@ GROUP BY m.year;
 - postgres pgvector extension
 - sqlalchemy
 
-#### docker compose
-```yaml
-service:
-    ...
+#### Table Design
+
+- Collection of table descriptions
+- Collection of business documentation
+- Pairs of question-sql for few-shopt prompting
+
+```sql
+CREATE SCHEMA vector_store;
+
+SET search_path TO vector_store;
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS ddl_collection (
+	ID SERIAL PRIMARY KEY,
+	DOCUMENT VARCHAR NOT NULL,
+	QUESTION VARCHAR(256) NULL,
+	EMBEDDING VECTOR(768)
+);
+
+CREATE INDEX IF NOT EXISTS ddl_collection_index ON ddl_collection USING hnsw (embedding vector_cosine_ops);
+
+CREATE TABLE IF NOT EXISTS doc_collection (
+	ID SERIAL PRIMARY KEY,
+	DOCUMENT VARCHAR NOT NULL,
+	QUESTION VARCHAR(256) NULL,
+	EMBEDDING VECTOR(768)
+);
+
+CREATE INDEX IF NOT EXISTS doc_collection_index ON doc_collection USING hnsw (embedding vector_cosine_ops);
+
+CREATE TABLE IF NOT EXISTS sql_collection (
+	ID SERIAL PRIMARY KEY,
+	DOCUMENT VARCHAR NOT NULL,
+	QUESTION VARCHAR(256) NULL,
+	EMBEDDING VECTOR(768)
+);
+
+CREATE INDEX IF NOT EXISTS sql_collection_index ON sql_collection USING hnsw (embedding vector_cosine_ops);
 ```
+
+#### Docker Compose
+```yaml
+services:
+  vector-store:
+    image: ankane/pgvector:latest
+    container_name: vector-store
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./docker/postgres/init_db.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - ./docker/volume/data:/var/lib/postgresql/data
+```
+
+
+#### 책임 분산 시키기
+
+- Vector store (RAG)
+- AI assistant
+- SQL Agent
+
