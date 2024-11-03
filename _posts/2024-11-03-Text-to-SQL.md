@@ -14,30 +14,52 @@ H4 { color: #C7A579 }
 
 (WIP)
 
-## Text-to-SQL이란?
+## Text-to-SQL
 
-자연어를 SQL 쿼리로 변환하는 기술
+Text-to-SQL이란 사용자가 자연어를 입력하면 이를 SQL 쿼리로 변환하는 기술을 의미한다.
 
-### 왜 필요할까?
+예를 들어 어떤 사용자가 "2024년 한 해 동안 개봉한 영화들을 알려줘."라고 입력하면 Text-to-SQL은 그 응답으로 다음과 같은 SQL 쿼리를 생성해준다.
 
-SQL에 대한 지식 없이도 빠르게 데이터를 조회할 수 있도록 도움
+```sql
+SELECT title
+FROM movies
+WHERE YEAR(release_dttm) = 2024
+```
 
-### 언제 유용할까?
+그런데 이 Text-to-SQL은 왜 필요한걸까?
 
-1. 빠르고 간단한 데이터 조회 업무
-2. SQL 교육
-3. Data discovery 대체
+#### 1. 데이터 접근성 향상
 
+많은 회사들이 의사결정에 데이터를 사용하면서, 이미 SQL에 익숙한 개발자뿐만 아니라 PO, PM, 마케터 등 비개발자들에게도 데이터를 읽고 분석할 수 있는 능력이 요구되기 시작했다.
 
-## Text-to-SQL 만들어보기
+기존에는 데이터 추출을 위해서 데이터 분석가들에게 SQL 쿼리 작성을 요청했지만, Text-to-SQL를 사용하면 데이터베이스와 SQL에 대한 지식이 부족하더라도 원하는 데이터를 언제든지 찾아볼 수 있다.
 
-### LLM
+비개발자도 "지난 한 달 동안 GMV는 얼마였지?" 같은 질문을 자연어로 입력해 데이터를 조회할 수 있으므로, SQL 지식의 장벽을 없애고 데이터 접근성을 크게 향상시킨다.
 
-- OpenAI ChatGPT
+#### 2. Data Discovery 보완
 
-### Agent
+SQL 지식이 있더라도 조직이 갖고 있는 데이터에 익숙해지기 위해서는 많은 시간과 경험이 필요하다.
 
-#### Zero-shot prompt
+실제로 데이터 분석가들은 SQL 쿼리를 작성하는 것 외에도 데이터를 찾아다니는데 어느정도 시간을 할애한다.
+    - 조직이 어떤 데이터를 수집하고 있는지
+    - 데이터는 어디에 보관되어 있는지
+    - 데이터가 비지니스적으로 어떤 의미를 갖고 있는지
+
+데이터가 어디에 있는지, 어떤 테이블과 컬럼이 필요한지 모를 때에도 Text-to-SQL은 자연어로 질문만 입력하면 알아서 SQL을 작성해준다.
+
+이는 Data Discovery 도구를 대체하거나 보완하는 역할을 하며, 데이터 구조와 배경에 대한 지식이 부족한 사용자도 효율적으로 데이터를 탐색할 수 있게 돕는다.
+
+### Text-to-SQL 구현
+
+그러면 이제 파이썬을 이용해 Text-to-SQL 애플리케이션을 구핸해보자.
+
+#### 1. LLM
+
+LLM 서버로는 `OpenAI ChatGPT`를 사용하기로 하였다.
+
+#### 2. Agent
+
+#### 3. Zero-shot prompting
 
 ```python
 import textwrap
@@ -50,7 +72,7 @@ API_KEY = "{{ Your API Token }}"
 MODEL = "gpt-3.5-turbo"
 
 temperature = 0.2
-max_tokens = 4096
+max_tokens = 1000
 
 client = OpenAI(api_key=API_KEY)
 
@@ -150,7 +172,7 @@ WHERE m.year BETWEEN 2020 AND 2024
 GROUP BY m.year;
 ```
 
-#### Few-shot prompt
+#### 3. Few-shot prompting
 
 ### RAG
 
