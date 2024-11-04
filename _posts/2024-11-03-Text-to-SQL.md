@@ -36,7 +36,7 @@ WHERE YEAR(release_dttm) = 2024
 
 비개발자도 "지난 한 달 동안 GMV는 얼마였지?" 같은 질문을 자연어로 입력해 데이터를 조회할 수 있으므로, SQL 지식의 장벽을 없애고 데이터 접근성을 크게 향상시킨다.
 
-#### 2. Data Discovery 보완
+#### 2. Data Discovery
 
 SQL 지식이 있더라도 조직이 갖고 있는 데이터에 익숙해지기 위해서는 많은 시간과 경험이 필요하다.
 
@@ -60,6 +60,96 @@ LLM 서버로는 `OpenAI ChatGPT`를 사용하기로 하였다.
 #### 2. Agent
 
 #### 3. Zero-shot prompting
+
+Zero-shot 프롬프팅이란 사전에 학습된 예시나 정보 없이도 모델에게 질문을 던져 바로 답을 생성하는 방식을 의미한다.
+
+```python
+import textwrap
+from typing import Dict
+
+from openai import OpenAI
+
+
+API_KEY = "{{ Your API Token }}"
+MODEL = "gpt-3.5-turbo"
+
+temperature = 0.2
+max_tokens = 1000
+
+client = OpenAI(api_key=API_KEY)
+
+
+def generate_system_message(message: str) -> Dict[str, str]:
+    return {"role": "system", "content": message}
+
+
+def generate_user_message(message: str) -> Dict[str, str]:
+    return {"role": "user", "content": message}
+
+dialect = "Presto"
+
+initial_prompt = textwrap.dedent(
+    """
+    당신은 {dialect} 전문가입니다. 유저의 질문에 대해 SQL 쿼리를 생성하여 답변해주세요.
+    제공되는 컨텍스트를 참고로 SQL 쿼리를 생성해야 하며, 반드시 가이드라인을 준수하여 응답해주세요.
+    """
+)
+
+guideline_prompt = textwrap.dedent(
+    """
+    ==Response Guidelines
+    1. JOIN 구문을 사용할 경우, 반드시 테이블 별칭(alias)을 명시해 주세요.
+    2. Subquery의 depth가 2보다 큰 경우, CTE를 사용해주세요.
+    3. SQL 쿼리를 응답해야 하는 경우에는 SQL 포멧으로 정리해서 응답해주세요.
+    """
+)
+
+question = "2020년부터 2024년까지 각 년도 별 개봉한 영화들의 평균 평점을 계산해줘."
+
+prompts = [
+    generate_system_message(
+        initial_prompt.format(dialect=dialect)
+        + context_prompt
+        + guideline_prompt
+    ),
+    generate_user_message(question)
+]
+
+response = client.chat.completions.create(
+    model=MODEL,
+    messages=prompts,
+    max_tokens=max_tokens,
+    temperature=temperature,
+)
+
+sql = response.choices[0].message.content
+
+print(sql)
+```
+
+result
+
+```sql
+WITH yearly_movies AS (
+    SELECT 
+        EXTRACT(YEAR FROM release_date) AS release_year,
+        movie_id
+    FROM movies
+    WHERE EXTRACT(YEAR FROM release_date) BETWEEN 2020 AND 2024
+)
+
+SELECT 
+    release_year,
+    AVG(rating) AS avg_rating
+FROM yearly_movies ym
+JOIN ratings r ON ym.movie_id = r.movie_id
+GROUP BY release_year
+ORDER BY release_year
+```
+
+#### 4. Contextual prompting
+
+이제 우리가 보유하고 있는 테이블 및 컬럼 정보를 사용해 SQL 쿼리를 생성하도록 해보자.
 
 ```python
 import textwrap
@@ -172,7 +262,7 @@ WHERE m.year BETWEEN 2020 AND 2024
 GROUP BY m.year;
 ```
 
-#### 3. Few-shot prompting
+#### 5. Few-shot prompting
 
 ### RAG
 
