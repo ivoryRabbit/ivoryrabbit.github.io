@@ -1,5 +1,5 @@
 ---
-title:        Text-to-SQL 개발해보기
+title:        Text-to-SQL를 알아보자
 date:         2024-11-09
 categories:   [Data, Science]
 comments:     true
@@ -27,7 +27,7 @@ WHERE YEAR(release_dttm) = 2024
 
 #### 1. 데이터 접근성 향상
 
-많은 회사들이 의사결정에 데이터를 사용하면서, 이미 SQL에 익숙한 개발자뿐만 아니라 PO, PM, 마케터 등 비개발자들에게도 데이터를 읽고 분석할 수 있는 능력이 요구되기 시작했다.
+많은 회사들이 의사결정에 데이터를 사용하면서 이미 SQL에 익숙한 개발자뿐만 아니라 PO, PM, 마케터 등 비개발자들에게도 데이터를 읽고 분석할 수 있는 능력이 요구되기 시작했다.
 
 기존에는 데이터 추출을 위해서 데이터 분석가들에게 SQL 쿼리 작성을 요청했지만, Text-to-SQL를 사용하면 데이터베이스와 SQL에 대한 지식이 부족하더라도 원하는 데이터를 언제든지 찾아볼 수 있다.
 
@@ -44,18 +44,19 @@ SQL 지식이 있더라도 조직이 갖고 있는 데이터에 익숙해지기 
 
 데이터가 어디에 있는지, 어떤 테이블과 컬럼이 필요한지 모르더라도 Text-to-SQL은 자연어로 질문만 입력하면 알아서 SQL을 작성해준다.
 
-이는 Data Discovery 도구를 대체하거나 보완하는 역할을 하며, 데이터 구조와 배경에 대한 지식이 부족한 사용자도 효율적으로 데이터를 탐색할 수 있게 돕는다.
+이는 Data Discovery 도구를 보완하는 역할을 할 수 있으며, 데이터 구조와 배경에 대한 지식이 부족한 사용자도 효율적으로 데이터를 탐색할 수 있게 돕는다.
 
 ### Text-to-SQL 구현
 
-그러면 이제 파이썬을 이용해 Text-to-SQL 애플리케이션을 구현해보자.
+그러면 이제 Python에서 가장 간단한 형태의 Text-to-SQL을 구현해보자.
 
 #### 1. LLM
 
-LLM 서버로는 `OpenAI ChatGPT`를 사용하기로 하였다. OpenAI의 API 키를 발급받은 후, python으로 API를 호출하기 위한 library를 설치한다.
+LLM 서버로는 `OpenAI ChatGPT`를 사용하기로 하였다. OpenAI의 API 키를 발급받은 후, Python에서 API를 호출하기 위한 library를 설치한다.
 
+##### [requirements]
 ```shell
-pip3 install openai==1.54.3 sqlparse==0.5.1
+pip3 install openai sqlparse
 ```
 
 #### 2. Contextual Prompting
@@ -185,11 +186,13 @@ GROUP BY m.year;
 
 하지만 LLM 모델에는 토큰 개수에 제한이 있기 때문에, 프롬프트에 우리가 가진 모든 테이블 DDL을 추가하기에는 한계가 있다.
 
-이때 사용가능한 방법이 바로 RAG(Retrieval-Augmented Generation)이다. 사용자에게서 질문이 들어오면, 관련 배경 지식을 검색(Retrieval)하여 프롬프트를 통해 제공할 Context를 보강(Augmented)해주는 역할을 한다.
+이때 사용가능한 방법이 바로 **RAG(Retrieval-Augmented Generation)**이다. 사용자에게서 질문이 들어오면, 관련 배경 지식을 검색(Retrieval)하여 프롬프트를 통해 제공할 Context를 보강(Augmented)해주는 역할을 한다.
 
 프롬프트에 모든 지식을 넣는게 아니라, 질문이 들어오면 답변에 필요한 지식만 추출하여 프롬프트에 추가해주는 것이다. 이때 지식 데이터베이스로는 Vector Database 혹은 Graph Database들이 사용된다.
 
 이번 프로젝트에서는 Postgres의 extension 중 하나인 pgvector를 사용하여 Vector Database를 구축해보았다.
+
+먼저 Vector Database를 띄우기 위해 docker compose 파일을 작성하자.
 
 ##### [docker-compose.yaml]
 ```yaml
@@ -208,7 +211,10 @@ services:
       - ./docker/volume/data:/var/lib/postgresql/data
 ```
 
-VSS 알고리즘으로는 HNSW를 선택한다.
+pgvector는 HNSW, IVF 등의 VSS 알고리즘을 지원하고 있다. 그 중에서 HNSW를 사용해보도록 하자.
+
+- [IVF 알고리즘](https://ivoryrabbit.github.io/posts/IVF/){: target="_blank"}
+- [HNSW 알고리즘](https://ivoryrabbit.github.io/posts/HNSW/){: target="_blank"}
 
 ##### [init_db.sql]
 
@@ -229,8 +235,6 @@ CREATE TABLE IF NOT EXISTS ddl_collection (
 CREATE INDEX IF NOT EXISTS ddl_collection_index ON ddl_collection USING hnsw (embedding vector_cosine_ops);
 ```
 
-마지막으로 docker compose를 통해 Vector Database를 실행시켜주자.
-
 ```shell
 docker compose up --build
 ```
@@ -241,7 +245,7 @@ Python의 SQLAlchemy는 Postgres의 pgvector를 위한 ORM을 지원하고 있�
 
 ##### [requirements]
 ```shell
-pip3 install psycopg2-binary==2.9.9 pgvector==0.3.0 sqlalchemy==2.0.31
+pip3 install psycopg2-binary pgvector sqlalchemy
 ```
 
 ##### [model]
@@ -274,7 +278,7 @@ class DDLCollection(Base):
 
 ##### [requirements]
 ```shell
-pip3 install transformers==4.42.3
+pip3 install transformers
 ```
 
 이제 테이블 DDL과 그 embedding vector들을 ORM을 통해 데이터베이스에 삽입한다.
@@ -488,3 +492,29 @@ JOIN ratings r ON m.id = r.movie_id
 WHERE m.year BETWEEN 2020 AND 2024
 GROUP BY m.year;
 ```
+
+### 고찰
+
+이번 글에서는 가장 간단한 형태의 Text-to-SQL을 구현하기 위해서 테이블 DDL을 사용하였다. 만약 이보다 더 정확한 수준의 SQL 쿼리 생성이 요구된다면, 다음과 같은 방법들을 사용할 수 있다.
+
+#### 1. Data Catalog
+
+DDL 대신 Data Catalog를 주입해준다.
+- Table name, description
+- Column name, type, description
+- Primary key, partition key
+
+#### 2. 비지니스 용어 사전
+
+데이터 분석에서 사용되는 비지니스 용어들의 정의는 회사 by 회사, 도메인 by 도메인으로 다를 수 있다.
+
+- 용어 사전을 만들고 사용자들이 편집할 수 있도록 admin 개발
+- 사용자의 질문과 가장 관련 있는 용어들의 정의를 프롬프트에 추가
+
+#### 3. Few-shot Prompting
+
+Few-shot prompting은 몇 가지 예시를 프롬프트와 함께 제공하여 LLM 모델이 더 정확하게 SQL을 생성할 수 있도록 돕는 방식이다.
+
+- 사용자의 질문과 이에 대응되는 SQL 쿼리를 하나의 예제로 만들어 RAG에 저장
+- 사용자가 새로운 질문을 입력하면 가장 관련 있는 예제들을 검색하여 추가
+- 사람이 직접 예제를 만들 수도 있지만 쿼리 로그를 수집하여 LLM 모델에게 질문을 생성하도록 자동화 가능
