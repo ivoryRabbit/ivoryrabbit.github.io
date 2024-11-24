@@ -29,9 +29,9 @@ WHERE YEAR(release_dttm) = 2024
 
 많은 회사들이 의사결정에 데이터를 사용하면서 이미 SQL에 익숙한 개발자뿐만 아니라 PO, PM, 마케터 등 비개발자들에게도 데이터를 읽고 분석할 수 있는 능력이 요구되기 시작했다.
 
-기존에는 데이터 추출을 위해서 데이터 분석가들에게 SQL 쿼리 작성을 요청했지만, Text-to-SQL를 사용하면 데이터베이스와 SQL에 대한 지식이 부족하더라도 원하는 데이터를 언제든지 찾아볼 수 있다.
+기존에는 데이터 추출을 위해서 데이터 분석가들에게 SQL 쿼리 작성을 요청했겠지만, Text-to-SQL를 사용하면 데이터베이스 및 SQL에 대한 전문 지식이 부족하더라도 원하는 데이터를 언제든지 찾아볼 수 있다.
 
-비개발자도 "지난 한 달 동안 GMV는 얼마였지?" 같은 질문을 자연어로 입력해 데이터를 조회할 수 있으므로, SQL 지식의 장벽을 없애고 데이터 접근성을 크게 향상시킨다.
+비개발자도 "지난 한 달 동안 GMV는 얼마였지?" 같은 질문을 자연어로 입력해 데이터를 조회할 수 있으므로, SQL 지식의 장벽을 없애고 데이터 접근성을 크게 높인다.
 
 #### 2. Data Discovery
 
@@ -44,7 +44,7 @@ SQL 지식이 있더라도 조직이 갖고 있는 데이터에 익숙해지기 
 
 데이터가 어디에 있는지, 어떤 테이블과 컬럼이 필요한지 모르더라도 Text-to-SQL은 자연어로 질문만 입력하면 알아서 SQL을 작성해준다.
 
-이는 Data Discovery 도구를 보완하는 역할을 할 수 있으며, 데이터 구조와 배경에 대한 지식이 부족한 사용자도 효율적으로 데이터를 탐색할 수 있게 돕는다.
+이는 Data Discovery 도구를 보조하는 역할을 할 수 있으며, 데이터의 생김새와 맥락을 모르는 사용자도 빠르게 데이터를 탐색할 수 있게 돕는다.
 
 ### Text-to-SQL 구현
 
@@ -67,7 +67,7 @@ pip3 install openai sqlparse
 
 이때 우리가 보유하고 있는 테이블과 스키마 정보를 LLM 모델에게 제공하기 위해서는 가이드라인 뿐만 아니라 테이블 정보를 프롬프트에 포함시켜야 한다.
 
-이렇게 모델이 참조할 수 있는 배경 지식을 제공하는 프롬프팅 방식을 **Contextual Prompting**이라고 한다.
+이와 같이 모델이 참고할 수 있도록 배경 지식을 제공하는 프롬프팅 방식을 **Contextual Prompting**이라고 한다.
 
 ```python
 import textwrap
@@ -77,7 +77,7 @@ import sqlparse
 from openai import OpenAI
 
 
-API_KEY = "{{ Your API Token }}"
+API_KEY = "{ Your API Token }"
 MODEL = "gpt-3.5-turbo"
 
 temperature = 0.2
@@ -182,17 +182,17 @@ GROUP BY m.year;
 
 #### 3. RAG
 
-위의 Contextual Prompting 방식에는 한가지 치명적인 단점이 있다. 사용자가 어떤 질문을 할지 아직 모르는 상태이므로, 가능한 모든 배경 지식을 프롬프트에 추가해주어야 한다는 것이다.
+위의 Contextual Prompting 방식에는 한가지 치명적인 단점이 있다. 사용자가 어떤 질문을 할지 아직 모르는 상태이므로 가능한 모든 배경 지식을 프롬프트에 추가해주어야 한다는 것이다.
 
-하지만 LLM 모델에는 토큰 개수에 제한이 있기 때문에, 프롬프트에 우리가 가진 모든 테이블 DDL을 추가하기에는 한계가 있다.
+하지만 LLM 모델에는 토큰 개수에 제한이 있기 때문에, 우리가 가진 모든 테이블 DDL을 프롬프트에 추가하기에는 한계가 있다.
 
-이때 사용가능한 방법이 바로 **RAG(Retrieval-Augmented Generation)**이다. 사용자에게서 질문이 들어오면, 관련 배경 지식을 검색(Retrieval)하여 프롬프트를 통해 제공할 Context를 보강(Augmented)해주는 역할을 한다.
+이때 사용가능한 방법이 바로 **RAG(Retrieval-Augmented Generation)**이다. 사용자로부터 질문이 들어오면, 관련 배경 지식을 검색(Retrieval)하여 프롬프트를 통해 제공할 Context를 보강(Augmented)해주는 역할을 한다.
 
-프롬프트에 모든 지식을 넣는게 아니라, 질문이 들어오면 답변에 필요한 지식만 추출하여 프롬프트에 추가해주는 것이다. 이때 지식 데이터베이스로는 Vector Database 혹은 Graph Database들이 사용된다.
+즉, 프롬프트에 모든 지식을 넣는게 아니라 질문이 들어오면 답변에 필요한 지식만 추출하여 프롬프트에 추가해주는 것이다. 이때 지식 데이터베이스로는 Vector Database 혹은 Graph Database들이 사용된다.
 
 이번 프로젝트에서는 Postgres의 extension 중 하나인 pgvector를 사용하여 Vector Database를 구축해보았다.
 
-먼저 Vector Database를 띄우기 위해 docker compose 파일을 작성하자.
+먼저 Vector Database를 띄우기 위해 docker compose 파일을 작성해보자.
 
 ##### [docker-compose.yaml]
 ```yaml
@@ -211,7 +211,7 @@ services:
       - ./docker/volume/data:/var/lib/postgresql/data
 ```
 
-pgvector는 HNSW, IVF 등의 VSS 알고리즘을 지원하고 있다. 그 중에서 HNSW를 사용해보도록 하자.
+pgvector는 HNSW, IVF 등의 VSS 알고리즘을 지원하고 있다. 이번에는 그 중에서 HNSW 알고리즘을 사용하였다.
 
 - [IVF 알고리즘](https://ivoryrabbit.github.io/posts/IVF/){: target="_blank"}
 - [HNSW 알고리즘](https://ivoryrabbit.github.io/posts/HNSW/){: target="_blank"}
@@ -241,7 +241,7 @@ docker compose up --build
 
 #### 4. ORM
 
-Python의 SQLAlchemy는 Postgres의 pgvector를 위한 ORM을 지원하고 있다. 이를 활용하면 Vector 타입의 파싱 고민 없이 쉽게 DML를 실행시킬 수 있다.
+Python의 SQLAlchemy는 Postgres의 pgvector를 위한 ORM을 지원하고 있다. 이를 활용하면 Vector 타입의 파싱 고민 없이 DML를 실행시킬 수 있다.
 
 ##### [requirements]
 ```shell
@@ -270,7 +270,7 @@ class DDLCollection(Base):
 
 #### 5. Sentence Transformers
 
-이제 테이블 스키마 정보를 Vector Database에 저장해보자. 자연어 문장을 embedding vector로 변환하는데는 주로 Sentence Transformer 계열의 모델들이 사용된다.
+이제 테이블 스키마 정보를 Vector Database에 저장해보자. 자연어 문장을 Embedding Vector로 변환하는데는 주로 Sentence Transformer 계열의 모델들이 사용된다.
 
 이번 글에서는 허깅페이스에서 제공하는 SentenceTransformer 패키지를 통해 경량화 모델 중 하나인 `paraphrase-albert-small-v2`를 사용하였다.
 
@@ -281,7 +281,7 @@ class DDLCollection(Base):
 pip3 install transformers
 ```
 
-이제 테이블 DDL과 그 embedding vector들을 ORM을 통해 데이터베이스에 삽입한다.
+이제 테이블 DDL과 그 Embedding Vector들을 ORM을 이용해 데이터베이스에 삽입한다.
 
 ##### [insert]
 ```python
@@ -371,9 +371,9 @@ with session_maker.begin() as session:
 
 #### 6. Prompting with RAG
 
-마지막으로 사용자의 질문을 embedding vector로 인코딩하여 consine similarity가 작은 순으로 테이블 DDL들을 검색하고, 이를 프롬프트에 주입하는 코드를 작성해보자.
+마지막으로 사용자의 질문을 Embedding Vector로 인코딩하여 consine similarity가 작은 순으로 테이블 DDL들을 검색하고, 이를 프롬프트에 주입하는 코드를 작성해보자.
 
-이번 예제에서는 테이블 개수가 3개 밖에 없기 때문에, 최대로 검색할 데이터의 개수를 2개로 제한하였다. 현업에서는 JOIN이나 CTE를 위해 3~5개 정도의 테이블을 검색하도록 설정하면 좋을 것 같다.
+이번 예제에서는 테이블 개수가 3개 밖에 없기 때문에, 최대로 검색할 데이터의 개수를 2개로 제한하였다. 현업에서는 Join이나 CTE를 위해 3~5개 정도의 테이블을 검색하도록 설정하면 좋을 것 같다.
 
 ```python
 import textwrap
@@ -404,7 +404,7 @@ model = SentenceTransformer(
     cache_folder=LOCAL_CACHE_PREFIX,
 )
 
-API_KEY = "{{ Your API Token }}"
+API_KEY = "{ Your API Token }"
 MODEL = "gpt-3.5-turbo"
 
 temperature = 0.2
@@ -495,7 +495,7 @@ GROUP BY m.year;
 
 ### 고찰
 
-이번 글에서는 가장 간단한 형태의 Text-to-SQL을 구현하기 위해서 테이블 DDL을 사용하였다. 만약 이보다 더 정확한 수준의 SQL 쿼리 생성이 요구된다면, 다음과 같은 방법들을 사용할 수 있다.
+이번 글에서는 가장 간단한 형태의 Text-to-SQL을 구현하기 위해서 테이블 DDL을 사용하였다. 만약 이보다 더 정확한 수준의 SQL 쿼리 생성이 요구된다면 다음과 같은 방법들을 사용할 수 있다.
 
 #### 1. Data Catalog
 
@@ -508,8 +508,8 @@ DDL 대신 Data Catalog를 주입해준다.
 
 데이터 분석에서 사용되는 비지니스 용어들의 정의는 회사 by 회사, 도메인 by 도메인으로 다를 수 있다.
 
-- 용어 사전을 만들고 사용자들이 편집할 수 있도록 admin 개발
-- 사용자의 질문과 가장 관련 있는 용어들의 정의를 프롬프트에 추가
+- 용어 사전을 만들고 사용자들이 편집할 수 있도록 어드민 개발
+- 사용자의 질문과 가장 관련 있는 용어들의 정의들을 프롬프트에 추가
 
 #### 3. Few-shot Prompting
 
@@ -517,4 +517,5 @@ Few-shot prompting은 몇 가지 예시를 프롬프트와 함께 제공하여 L
 
 - 사용자의 질문과 이에 대응되는 SQL 쿼리를 하나의 예제로 만들어 RAG에 저장
 - 사용자가 새로운 질문을 입력하면 가장 관련 있는 예제들을 검색하여 추가
-- 사람이 직접 예제를 만들 수도 있지만 쿼리 로그를 수집하여 LLM 모델에게 질문을 생성하도록 자동화 가능
+- 사람이 직접 예제를 만들 수도 있지만 쿼리 로그를 수집하여 LLM 모델에게 질문을 생성하도록 자동화
+- 피드백을 수집하여 양질의 예제를 RAG에 저장
