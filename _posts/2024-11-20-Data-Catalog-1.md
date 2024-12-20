@@ -119,4 +119,4 @@ Airbyte에 대해 공부하면서 Temporal이라는 스케쥴링 프레임워크
 
 #### 5. Text-to-SQL
 
-ChatGPT 또는 Claude API Key를 등록하면 데이터 카탈로그를 이용해 SQL 쿼리를 생성해주는 기능을 추가할 예정이다.
+ChatGPT 또는 Claude API 키를 등록하면 데이터 카탈로그를 이용해 SQL 쿼리를 생성해주는 기능을 추가할 예정이다.
