@@ -371,7 +371,7 @@ with session_maker.begin() as session:
 
 #### 6. Prompting with RAG
 
-마지막으로 사용자의 질문을 Embedding Vector로 인코딩하여 Consine Similarity가 작은 순으로 테이블 DDL들을 검색하고, 이를 프롬프트에 주입하는 코드를 작성해보자.
+마지막으로 사용자의 질문을 Embedding Vector로 인코딩하여 Cosine Similarity가 작은 순으로 테이블 DDL들을 검색하고, 이를 프롬프트에 주입하는 코드를 작성해보자.
 
 이번 예제에서는 테이블 개수가 3개 밖에 없기 때문에, 최대로 검색할 데이터의 개수를 2개로 제한하였다. 현업에서는 Join이나 CTE를 위해 3~5개 정도의 테이블을 검색하도록 설정하면 좋을 것 같다.
 
