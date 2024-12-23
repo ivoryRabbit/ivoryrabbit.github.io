@@ -441,7 +441,10 @@ with session_maker.begin() as session:
     rows = session.scalars(
         select(DDLCollection)
         .order_by(
-            DDLCollection.embedding.cosine_distance(question_vector),
+            DDLCollection
+            .embedding
+            .cosine_distance(question_vector)
+            .desc(),
         )
         .limit(2)
     ).all()
