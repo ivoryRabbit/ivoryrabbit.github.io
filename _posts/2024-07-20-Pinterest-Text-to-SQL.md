@@ -23,7 +23,7 @@ Pinterest에서는 대부분의 데이터 분석이 사내 오픈소스 빅데�
 
 첫 번째 버전은 LLM을 활용한, 간단한 Text-to-SQL 솔루션입니다. 아키텍처를 자세히 살펴보겠습니다.
 
-![initial-version](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*wDKR6-ToiX5UgsUYN41JiQ.png){: width="400" height="200" }
+![initial-version](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*wDKR6-ToiX5UgsUYN41JiQ.png){: width="600" }
 
 유저는 사용할 테이블들을 선택하고 분석 질문을 던집니다.
 
@@ -92,10 +92,10 @@ Please help to generate a {dialect} query to answer the question. Your response 
 6. Please always respond with a valid well-formed JSON object with the following format
 
 ===Response Format
-{{
+{
     "query": "A generated SQL query when context is sufficient.",
     "explanation": "An explanation of failing to generate the query."
-}}
+}
 
 ===Question
 {question}
@@ -120,7 +120,7 @@ Text-to-SQL이 데이터 사용자의 생산성에 얼마나 영향을 미치는
 
 이를 완화하기 위해 RAG(Retrieval Augmented Generation)를 통합하여 사용자가 작업에 필요한 테이블을 선택할 수 있도록 안내했습니다. RAG가 추가된 새로운 인프라 구조를 살펴보자면 다음과 같습니다.
 
-![second-iteration](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*8lgsIGY1LVd1HqPAXNsddw.png){: width="400" height="200" }
+![second-iteration](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*8lgsIGY1LVd1HqPAXNsddw.png){: width="600" }
 
 1. 테이블 summary 및 테이블 사용 쿼리의 벡터 인덱스를 생성하기 위해 오프라인 작업을 수행합니다.
 2. 사용자가 테이블을 지정하지 않으면 질문이 임베딩으로 변환되고, 벡터 인덱스에 대해 Similarity Search를 수행하여 관련성이 높은 상위 N개의 테이블을 추론합니다.
