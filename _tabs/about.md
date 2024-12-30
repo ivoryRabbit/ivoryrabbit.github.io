@@ -10,12 +10,6 @@ order: 4
 ### Department of
 - Mathematical Sciences
 
-### Programming languages
-- Python
-- Scala
-- Kotlin
-- R
-
 ### Interested in
 - Descrete Geometry
 - Graph Theory
@@ -33,4 +27,4 @@ order: 4
 ### Favorites
 - Rock & Indie
 - Cat
-- Caffeine
+- Coffee
