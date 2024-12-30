@@ -7,6 +7,9 @@ order: 4
 ### Currently working as
 - Data Engineer (2021 ~ Now)
 
+### Department of
+- Mathematical Sciences
+
 ### Programming languages
 - Python
 - Scala
@@ -19,17 +22,13 @@ order: 4
 - Data Science
 - Recommander System
 
-### Department of
-- Mathematical Sciences
-
 ### Experiences with
 - E-Commerce (2021 ~ Now)
 - Korean Combat Training Center (2019 ~ 2021)
 - Teaching Assistant (2017 ~ 2019)
-- Night School Teacher (2012 ~ 2013)
 
 ### Researches
-- Radon Numbers and the Fractional Helly Theorem (2020)
+- Radon Numbers and the Fractional Helly Theorem (2019)
 
 ### Favorites
 - Rock & Indie
