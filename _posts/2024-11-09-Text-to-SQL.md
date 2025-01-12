@@ -2,6 +2,7 @@
 title:        Text-to-SQL를 알아보자
 date:         2024-11-09
 categories:   [Data, Science]
+tags:         [Text-to-SQL, RAG, LLM]
 comments:     true
 ---
 
