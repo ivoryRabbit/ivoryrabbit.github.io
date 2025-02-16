@@ -42,14 +42,14 @@ H4 { color: #C7A579 }
 
 #### [Data Parallelism]
 
-![image_01](/assets/img/posts/2025-02-15/image_01.png){: width="300" }*출처 - [Intro Distributed Deep Learning](https://xiandong79.github.io/Intro-Distributed-Deep-Learning)*
+![image_01](/assets/img/posts/2025-02-15/image_01.png){: width="500" }*출처 - [Intro Distributed Deep Learning](https://xiandong79.github.io/Intro-Distributed-Deep-Learning)*
 
 - 데이터를 각 GPU 장치로 분산
 - parameter device에서 gradient 통합
 
 #### [Model Parallelism]
     
-![image_02](/assets/img/posts/2025-02-15/image_02.png){: width="300" }*출처 - [Intro Distributed Deep Learning](https://xiandong79.github.io/Intro-Distributed-Deep-Learning)*
+![image_02](/assets/img/posts/2025-02-15/image_02.png){: width="500" }*출처 - [Intro Distributed Deep Learning](https://xiandong79.github.io/Intro-Distributed-Deep-Learning)*
 
 - 모델(tensor or layer)을 각 GPU 장치로 분산
 - 모델을 하나의 GPU 장치에 할당하기 어려운 경우 사용
@@ -58,7 +58,7 @@ H4 { color: #C7A579 }
 
 #### [Synchronous Update]
 
-![image_03](/assets/img/posts/2025-02-15/image_03.png){: width="300" }*출처 - [TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems](https://arxiv.org/pdf/1603.04467)*
+![image_03](/assets/img/posts/2025-02-15/image_03.png){: width="500" }*출처 - [TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems](https://arxiv.org/pdf/1603.04467)*
 
 - 각  GPU 장치로 분산된 모델을 동기적으로 업데이트
 - 지연이 있지만 수렴이 빠름
@@ -66,7 +66,7 @@ H4 { color: #C7A579 }
 
 #### [Asynchronous Update]
 
-![image_04](/assets/img/posts/2025-02-15/image_04.png){: width="300" }*출처 - [TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems](https://arxiv.org/pdf/1603.04467)*
+![image_04](/assets/img/posts/2025-02-15/image_04.png){: width="500" }*출처 - [TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems](https://arxiv.org/pdf/1603.04467)*
 
 - 각 GPU 장치로 분산된 모델을 비동기적으로 업데이트
 - 지연은 없지만 수렴이 느림
@@ -76,16 +76,18 @@ H4 { color: #C7A579 }
 
 #### [All-Reduce]
 
-![image_05](/assets/img/posts/2025-02-15/image_05.png){: width="300" }*출처 - [Horovod: fast and easy distributed deep learning in TensorFlow](https://arxiv.org/pdf/1802.05799)*
+![image_05](/assets/img/posts/2025-02-15/image_05.png){: width="500" }*출처 - [Horovod: fast and easy distributed deep learning in TensorFlow](https://arxiv.org/pdf/1802.05799)*
 
 - 각 GPU 장치에서 계산한 gradient를 하나 또는 여러 parameter device로 모아서 집계
 - Parameter device에 메모리 및 네트워크 부하 집중
 
 #### [Ring All-Reduce]
 
-![image_06](/assets/img/posts/2025-02-15/image_06.png){: width="300" }
-![image_07](/assets/img/posts/2025-02-15/image_07.png){: width="300" }
-![image_08](/assets/img/posts/2025-02-15/image_08.png){: width="300" }*출처 -  [Parallel Computing for Machine Learning](https://www.youtube.com/watch?v=rj-hjS5L8Bw)*
+![image_06](/assets/img/posts/2025-02-15/image_06.png){: width="500" }
+
+![image_07](/assets/img/posts/2025-02-15/image_07.png){: width="500" }
+
+![image_08](/assets/img/posts/2025-02-15/image_08.png){: width="500" }*출처 -  [Parallel Computing for Machine Learning](https://www.youtube.com/watch?v=rj-hjS5L8Bw)*
 
 - 각 GPU 장치를 순환하며 gradient 일부를 전송하는식으로 gradient를 취합 및 공유
 
@@ -97,7 +99,7 @@ H4 { color: #C7A579 }
 
 1. DP (Data Parallelism)
     
-![image_09](/assets/img/posts/2025-02-15/image_09.png){: width="300" }*출처 -  [Training Neural Nets on Larger Batches: Practical Tips for 1-GPU, Multi-GPU & Distributed setups](https://medium.com/huggingface/training-larger-batches-practical-tips-on-1-gpu-multi-gpu-distributed-setups-ec88c3e51255)*
+![image_09](/assets/img/posts/2025-02-15/image_09.png){: width="500" }*출처 -  [Training Neural Nets on Larger Batches: Practical Tips for 1-GPU, Multi-GPU & Distributed setups](https://medium.com/huggingface/training-larger-batches-practical-tips-on-1-gpu-multi-gpu-distributed-setups-ec88c3e51255)*
     
 - input batch → scatter → forward → logit (=output of model) → gather → loss (=error with label) → scatter → backward → gradient → gather → update models
 - Single Node / Single Process / Multi Thread
@@ -106,7 +108,7 @@ H4 { color: #C7A579 }
 
 2. DDP (Distributed Data Parallelism)
     
-![image_10](/assets/img/posts/2025-02-15/image_10.png){: width="300" }*출처 -  [Training Neural Nets on Larger Batches: Practical Tips for 1-GPU, Multi-GPU & Distributed setups](https://medium.com/huggingface/training-larger-batches-practical-tips-on-1-gpu-multi-gpu-distributed-setups-ec88c3e51255)*
+![image_10](/assets/img/posts/2025-02-15/image_10.png){: width="500" }*출처 -  [Training Neural Nets on Larger Batches: Practical Tips for 1-GPU, Multi-GPU & Distributed setups](https://medium.com/huggingface/training-larger-batches-practical-tips-on-1-gpu-multi-gpu-distributed-setups-ec88c3e51255)*
 
 - input batch & label → scatter → forward → logit → loss → backward → gradient → gather → update models
 - Multi Node or Single Node / Multi Process
