@@ -1,5 +1,5 @@
 ---
-title:        Training on Multiple GPUs
+title:        Multiple GPU로 분산 학습 시키기
 date:         2025-02-15
 categories:   [Data, Science]
 tags:         [GPU, training]
